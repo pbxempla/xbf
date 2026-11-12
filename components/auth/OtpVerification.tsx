@@ -123,17 +123,17 @@ export function OtpVerification({
         throw new Error(result.error.message || "Invalid or expired verification code.");
       }
 
-      const resData = result.data as any;
-      const userRaw = resData?.user || resData;
+      const resData = result.data as Record<string, unknown> | undefined;
+      const userRaw = (resData?.user || resData) as Record<string, unknown> | undefined;
       const emailType: "work" | "personal" =
         userRaw?.emailType === "work" || eligibleCredits === 200 ? "work" : "personal";
       const creditBalance =
         typeof userRaw?.creditBalance === "number" ? userRaw.creditBalance : eligibleCredits;
 
       const userProfile: UserProfile = {
-        id: userRaw?.id || "user-" + Date.now(),
-        email: userRaw?.email || email.trim(),
-        normalized_email: (userRaw?.email || email.trim()).toLowerCase(),
+        id: (userRaw?.id as string) || "user-" + Date.now(),
+        email: (userRaw?.email as string) || email.trim(),
+        normalized_email: ((userRaw?.email as string) || email.trim()).toLowerCase(),
         email_type: emailType,
         emailType: emailType,
         credit_balance: creditBalance,
@@ -141,12 +141,15 @@ export function OtpVerification({
         is_verified: true,
         isVerified: true,
         auth_provider: "email_otp",
-        full_name: userRaw?.name || null,
-        created_at: new Date(userRaw?.createdAt || Date.now()).toISOString(),
+        full_name: (userRaw?.name as string) || null,
+        created_at:
+          typeof userRaw?.createdAt === "string" || typeof userRaw?.createdAt === "number"
+            ? new Date(userRaw.createdAt).toISOString()
+            : new Date().toISOString(),
       };
 
       const session: AuthSessionResponse = {
-        access_token: resData?.token || "better-auth-session",
+        access_token: (resData?.token as string) || "better-auth-session",
         token_type: "bearer",
         is_new_user: true,
         credits_awarded: creditBalance,
@@ -264,7 +267,7 @@ export function OtpVerification({
         <button
           type="submit"
           disabled={loading || digits.join("").length < 6}
-          className="mt-7 w-full h-[50px] px-5 rounded-xl bg-[#2b26c7] hover:bg-[#251fb8] text-white font-medium text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          className="mt-7 w-full h-12.5 px-5 rounded-xl bg-[#2b26c7] hover:bg-[#251fb8] text-white font-medium text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
         >
           {loading ? (
             <div className="flex items-center gap-2">

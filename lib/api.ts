@@ -69,15 +69,15 @@ export const authApi = {
       throw new Error(result.error.message || "Invalid or expired verification code.");
     }
 
-    const resData = result.data as any;
-    const userRaw = resData?.user || resData;
+    const resData = result.data as Record<string, unknown> | undefined;
+    const userRaw = (resData?.user || resData) as Record<string, unknown> | undefined;
     const classification = classifyEmail(email);
     const fallbackCredits = classification.credits || (classification.emailType === "work" ? 200 : 150);
 
     const userProfile: UserProfile = {
-      id: userRaw?.id || "user-" + Date.now(),
-      email: userRaw?.email || email.trim(),
-      normalized_email: (userRaw?.email || email.trim()).toLowerCase(),
+      id: (userRaw?.id as string) || "user-" + Date.now(),
+      email: (userRaw?.email as string) || email.trim(),
+      normalized_email: ((userRaw?.email as string) || email.trim()).toLowerCase(),
       email_type: (userRaw?.emailType as "work" | "personal") || classification.emailType,
       emailType: (userRaw?.emailType as "work" | "personal") || classification.emailType,
       credit_balance:
@@ -87,12 +87,15 @@ export const authApi = {
       is_verified: true,
       isVerified: true,
       auth_provider: "email_otp",
-      full_name: userRaw?.name || null,
-      created_at: new Date(userRaw?.createdAt || Date.now()).toISOString(),
+      full_name: (userRaw?.name as string) || null,
+      created_at:
+        typeof userRaw?.createdAt === "string" || typeof userRaw?.createdAt === "number"
+          ? new Date(userRaw.createdAt).toISOString()
+          : new Date().toISOString(),
     };
 
     const session: AuthSessionResponse = {
-      access_token: resData?.token || "better-auth-session",
+      access_token: (resData?.token as string) || "better-auth-session",
       token_type: "bearer",
       is_new_user: true,
       credits_awarded: userProfile.credit_balance,
@@ -115,7 +118,16 @@ export const authApi = {
       throw new Error("No active authenticated session found.");
     }
 
-    const userRaw = data.user as any;
+    const userRaw = data.user as unknown as {
+      id: string;
+      email: string;
+      emailType?: "work" | "personal";
+      creditBalance?: number;
+      isVerified?: boolean;
+      emailVerified?: boolean;
+      name?: string | null;
+      createdAt?: Date | string | number;
+    };
     const classification = classifyEmail(userRaw.email);
 
     return {

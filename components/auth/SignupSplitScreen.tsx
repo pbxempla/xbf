@@ -22,7 +22,16 @@ export function SignupSplitScreen() {
       .getSession()
       .then(({ data }) => {
         if (data?.session && data?.user) {
-          const userRaw = data.user as any;
+          const userRaw = data.user as {
+            id: string;
+            email: string;
+            emailType?: string | null;
+            creditBalance?: number;
+            isVerified?: boolean;
+            emailVerified?: boolean;
+            name?: string | null;
+            createdAt?: Date | string | number;
+          };
           const emailType: "work" | "personal" =
             userRaw.emailType === "work" ? "work" : "personal";
 
@@ -38,7 +47,11 @@ export function SignupSplitScreen() {
             isVerified: Boolean(userRaw.isVerified ?? userRaw.emailVerified),
             auth_provider: "email_otp",
             full_name: userRaw.name || null,
-            created_at: new Date(userRaw.createdAt || Date.now()).toISOString(),
+            created_at: new Date(
+              userRaw.createdAt instanceof Date
+                ? userRaw.createdAt.getTime()
+                : userRaw.createdAt || Date.now(),
+            ).toISOString(),
           };
 
           setAuthSession({

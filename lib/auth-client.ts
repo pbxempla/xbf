@@ -10,7 +10,7 @@ type EmailOtpApi = (typeof baseClient)["emailOtp"] & {
   sendVerificationOTP: (typeof baseClient)["emailOtp"]["sendVerificationOtp"];
 };
 
-const emailOtpMethods = (baseClient as any).emailOtp;
+const emailOtpMethods = (baseClient as unknown as { emailOtp: EmailOtpApi }).emailOtp;
 const emailOtpProxy: EmailOtpApi = {
   ...emailOtpMethods,
   sendVerificationOTP: emailOtpMethods.sendVerificationOtp.bind(emailOtpMethods),

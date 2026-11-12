@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
-import { LogOut, CheckCircle2, Coins, Sparkles, Building, User } from "lucide-react";
+import { LogOut, CheckCircle2, Coins, Sparkles, Building, User, ArrowRight } from "lucide-react";
 import { AuthSessionResponse } from "@/types/auth";
 import { authClient } from "@/lib/auth-client";
 import { clearAuthToken } from "@/lib/api";
@@ -14,6 +15,7 @@ interface WorkspacePreviewProps {
 }
 
 export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
+  const router = useRouter();
   const { user, is_new_user, credits_awarded } = session;
 
   useEffect(() => {
@@ -98,7 +100,7 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
         </div>
 
         {/* Live Credit Balance Display */}
-        <div className="p-4 rounded-xl bg-gradient-to-br from-[#1E1B4B] to-[#312E81] text-white flex items-center justify-between shadow-lg shadow-indigo-900/10">
+        <div className="p-4 rounded-xl bg-linear-to-br from-[#1E1B4B] to-[#312E81] text-white flex items-center justify-between shadow-lg shadow-indigo-900/10">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-amber-300">
               <Coins className="w-5 h-5" />
@@ -140,6 +142,16 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
             </span>
           </div>
         </div>
+
+        {/* Continue to Upload Action */}
+        <button
+          type="button"
+          onClick={() => router.push("/upload")}
+          className="w-full h-11 rounded-xl bg-[#2B26C7] hover:bg-[#201CB0] active:scale-[0.99] text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-indigo-600/20"
+        >
+          <span>Continue to Data Upload</span>
+          <ArrowRight className="w-4 h-4" />
+        </button>
 
         {/* Sign Out Action Button */}
         <button
