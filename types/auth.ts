@@ -13,13 +13,18 @@ export interface EmailClassification {
 export interface UserProfile {
   id: string;
   email: string;
-  normalized_email: string;
+  normalized_email?: string;
   email_type: "personal" | "work";
+  emailType?: "personal" | "work";
   credit_balance: number;
+  creditBalance?: number;
   is_verified: boolean;
-  auth_provider: string;
+  isVerified?: boolean;
+  auth_provider?: string;
   full_name?: string | null;
-  created_at: string;
+  name?: string | null;
+  created_at?: string;
+  createdAt?: string | Date;
 }
 
 export interface AuthSessionResponse {

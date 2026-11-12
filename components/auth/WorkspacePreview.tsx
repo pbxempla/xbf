@@ -4,7 +4,8 @@ import React, { useEffect } from "react";
 import confetti from "canvas-confetti";
 import { LogOut, CheckCircle2, Coins, Sparkles, Building, User } from "lucide-react";
 import { AuthSessionResponse } from "@/types/auth";
-import { authApi } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
+import { clearAuthToken } from "@/lib/api";
 import { XemplaLogo } from "@/components/icons/Icons";
 
 interface WorkspacePreviewProps {
@@ -28,9 +29,22 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
   }, [is_new_user]);
 
   const handleLogout = async () => {
-    await authApi.logout();
+    try {
+      await authClient.signOut();
+    } catch {
+      // Ignore
+    }
+    clearAuthToken();
     onLogout();
   };
+
+  const isWork = user.email_type === "work" || user.emailType === "work";
+  const creditBalance =
+    typeof user.credit_balance === "number"
+      ? user.credit_balance
+      : typeof user.creditBalance === "number"
+      ? user.creditBalance
+      : 0;
 
   return (
     <div className="w-full flex flex-col animate-fade-in">
@@ -49,7 +63,7 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
           </h3>
           <p className="text-xs text-emerald-700 mt-0.5">
             {is_new_user
-              ? `You have been awarded ${credits_awarded} initial credits for your ${user.email_type} account.`
+              ? `You have been awarded ${credits_awarded} initial credits for your ${user.email_type || user.emailType} account.`
               : `Signed in as ${user.email}.`}
           </p>
         </div>
@@ -65,7 +79,7 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
             <div>
               <div className="text-sm font-bold text-slate-900">{user.email}</div>
               <div className="text-xs text-slate-400 capitalize flex items-center gap-1.5 mt-0.5">
-                {user.email_type === "work" ? (
+                {isWork ? (
                   <span className="inline-flex items-center gap-1 text-blue-600 font-medium">
                     <Building className="w-3 h-3" /> Work Email Account
                   </span>
@@ -94,31 +108,47 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
                 Available Credits
               </div>
               <div className="text-2xl font-black text-white">
-                {user.credit_balance} <span className="text-sm font-medium text-indigo-200">Credits</span>
+                {creditBalance} <span className="text-sm font-medium text-indigo-200">Credits</span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1 text-xs font-semibold text-amber-300 bg-white/10 px-3 py-1.5 rounded-lg border border-white/10">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Ready to use</span>
+          <div className="text-right">
+            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/15 text-white text-xs font-semibold backdrop-blur-xs">
+              <Sparkles className="w-3 h-3 text-amber-300" />
+              {isWork ? "+200 Tier" : "+150 Tier"}
+            </span>
           </div>
         </div>
 
-        <div className="text-xs text-slate-400 leading-relaxed">
-          Your workspace environment is provisioned with passwordless security. Credits can be used for team collaboration, automation agents, and AI tasks.
+        {/* Account Details Metadata */}
+        <div className="flex flex-col gap-2.5 text-xs text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-100">
+          <div className="flex justify-between items-center">
+            <span>Account Type</span>
+            <span className="font-semibold text-slate-800 capitalize">
+              {user.email_type || user.emailType} Email
+            </span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span>Authentication</span>
+            <span className="font-semibold text-slate-800">Passwordless OTP (Better Auth)</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span>Initial Reward</span>
+            <span className="font-semibold text-emerald-600">
+              +{isWork ? "200" : "150"} Credits Granted
+            </span>
+          </div>
         </div>
-      </div>
 
-      {/* Log out Action */}
-      <div className="mt-8">
+        {/* Sign Out Action Button */}
         <button
           type="button"
           onClick={handleLogout}
-          className="w-full h-[46px] rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium text-sm transition-all flex items-center justify-center gap-2 cursor-pointer"
+          className="w-full h-11 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
         >
           <LogOut className="w-4 h-4 text-slate-500" />
-          <span>Sign out and return to signup</span>
+          <span>Sign out of Xempla</span>
         </button>
       </div>
     </div>

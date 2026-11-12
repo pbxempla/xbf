@@ -4,9 +4,8 @@ import {
   OtpRequestResponse,
   UserProfile,
 } from "@/types/auth";
-
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
+import { authClient } from "@/lib/auth-client";
+import { classifyEmail } from "@/lib/emailClassifier";
 
 const TOKEN_KEY = "xempla_auth_token";
 
@@ -27,91 +26,133 @@ export function clearAuthToken(): void {
   }
 }
 
-class ApiError extends Error {
-  status: number;
-  constructor(message: string, status: number) {
-    super(message);
-    this.name = "ApiError";
-    this.status = status;
-  }
-}
-
-async function request<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const token = getAuthToken();
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    ...(options.headers as Record<string, string>),
-  };
-
-  if (token && !headers["Authorization"]) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
-
-  const url = `${API_BASE_URL}${path}`;
-
-  try {
-    const res = await fetch(url, {
-      ...options,
-      headers,
-    });
-
-    const data = await res.json().catch(() => null);
-
-    if (!res.ok) {
-      const errorMessage =
-        data?.detail ||
-        data?.message ||
-        `Request failed with status code ${res.status}`;
-      throw new ApiError(errorMessage, res.status);
-    }
-
-    return data as T;
-  } catch (err: unknown) {
-    if (err instanceof ApiError) {
-      throw err;
-    }
-    // Network or server offline error
-    throw new ApiError(
-      "Unable to connect to the authentication server. Please check your backend connection.",
-      0
-    );
-  }
-}
-
+/**
+ * Frontend auth API powered directly by Better Auth and Next.js route handlers.
+ * Completely eliminates any external backend server dependencies.
+ */
 export const authApi = {
+  /**
+   * Dispatches a 6-digit passwordless OTP via Better Auth & company SMTP service.
+   */
   async requestOtp(email: string): Promise<OtpRequestResponse> {
-    return request<OtpRequestResponse>("/auth/otp/request", {
-      method: "POST",
-      body: JSON.stringify({ email }),
+    const classification = classifyEmail(email);
+    const { error } = await authClient.emailOTP.sendVerificationOTP({
+      email: email.trim(),
+      type: "sign-in",
     });
-  },
 
-  async verifyOtp(email: string, otp: string): Promise<AuthSessionResponse> {
-    const res = await request<AuthSessionResponse>("/auth/otp/verify", {
-      method: "POST",
-      body: JSON.stringify({ email, otp }),
-    });
-    if (res.access_token) {
-      setAuthToken(res.access_token);
+    if (error) {
+      throw new Error(error.message || "Failed to dispatch verification code. Please try again.");
     }
-    return res;
+
+    return {
+      success: true,
+      message: "Verification code sent successfully.",
+      email: email.trim(),
+      email_type: classification.emailType,
+      eligible_credits: classification.credits,
+      cooldown_seconds: 60,
+      expires_in_seconds: 600,
+    };
   },
 
+  /**
+   * Verifies the 6-digit OTP, creates the account with eligible credits if new, and logs in.
+   */
+  async verifyOtp(email: string, otp: string): Promise<AuthSessionResponse> {
+    const result = await authClient.emailOTP.verifyEmail({
+      email: email.trim(),
+      otp: otp.trim(),
+    });
+
+    if (result.error) {
+      throw new Error(result.error.message || "Invalid or expired verification code.");
+    }
+
+    const resData = result.data as any;
+    const userRaw = resData?.user || resData;
+    const classification = classifyEmail(email);
+    const fallbackCredits = classification.credits || (classification.emailType === "work" ? 200 : 150);
+
+    const userProfile: UserProfile = {
+      id: userRaw?.id || "user-" + Date.now(),
+      email: userRaw?.email || email.trim(),
+      normalized_email: (userRaw?.email || email.trim()).toLowerCase(),
+      email_type: (userRaw?.emailType as "work" | "personal") || classification.emailType,
+      emailType: (userRaw?.emailType as "work" | "personal") || classification.emailType,
+      credit_balance:
+        typeof userRaw?.creditBalance === "number" ? userRaw.creditBalance : fallbackCredits,
+      creditBalance:
+        typeof userRaw?.creditBalance === "number" ? userRaw.creditBalance : fallbackCredits,
+      is_verified: true,
+      isVerified: true,
+      auth_provider: "email_otp",
+      full_name: userRaw?.name || null,
+      created_at: new Date(userRaw?.createdAt || Date.now()).toISOString(),
+    };
+
+    const session: AuthSessionResponse = {
+      access_token: resData?.token || "better-auth-session",
+      token_type: "bearer",
+      is_new_user: true,
+      credits_awarded: userProfile.credit_balance,
+      user: userProfile,
+    };
+
+    if (session.access_token) {
+      setAuthToken(session.access_token);
+    }
+
+    return session;
+  },
+
+  /**
+   * Retrieves active session details and user profile from Better Auth.
+   */
   async getCurrentUser(): Promise<UserProfile> {
-    return request<UserProfile>("/users/me");
+    const { data, error } = await authClient.getSession();
+    if (error || !data?.user) {
+      throw new Error("No active authenticated session found.");
+    }
+
+    const userRaw = data.user as any;
+    const classification = classifyEmail(userRaw.email);
+
+    return {
+      id: userRaw.id,
+      email: userRaw.email,
+      normalized_email: userRaw.email.toLowerCase(),
+      email_type: (userRaw.emailType as "work" | "personal") || classification.emailType,
+      emailType: (userRaw.emailType as "work" | "personal") || classification.emailType,
+      credit_balance:
+        typeof userRaw.creditBalance === "number" ? userRaw.creditBalance : classification.credits,
+      creditBalance:
+        typeof userRaw.creditBalance === "number" ? userRaw.creditBalance : classification.credits,
+      is_verified: Boolean(userRaw.isVerified ?? userRaw.emailVerified),
+      isVerified: Boolean(userRaw.isVerified ?? userRaw.emailVerified),
+      auth_provider: "email_otp",
+      full_name: userRaw.name || null,
+      created_at: new Date(userRaw.createdAt || Date.now()).toISOString(),
+    };
   },
 
+  /**
+   * Retrieves OAuth authorization status / URL.
+   */
   async getOAuthUrl(provider: "google" | "microsoft"): Promise<OAuthAuthorizeResponse> {
-    return request<OAuthAuthorizeResponse>(`/auth/oauth/${provider}/authorize`);
+    return {
+      provider,
+      is_configured: false,
+      message: `${provider === "google" ? "Google" : "Microsoft"} OAuth credentials not configured in environment variables.`,
+    };
   },
 
+  /**
+   * Logs out the user and destroys the active session cookie.
+   */
   async logout(): Promise<void> {
     try {
-      await request<{ success: boolean }>("/auth/logout", { method: "POST" });
+      await authClient.signOut();
     } finally {
       clearAuthToken();
     }

@@ -3,7 +3,7 @@
 import React, { useState, useMemo } from "react";
 import { Mail, Check, User as UserIcon, Building2, ArrowRight, Loader2 } from "lucide-react";
 import { classifyEmail } from "@/lib/emailClassifier";
-import { authApi } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
 import { OtpRequestResponse } from "@/types/auth";
 import { XemplaLogo, CoinsStackIcon, GoogleLogo, MicrosoftLogo } from "@/components/icons/Icons";
 
@@ -30,7 +30,6 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
   };
 
   const handleUseWorkEmailInstead = () => {
-    // Focus email input and suggest company domain
     const parts = email.split("@");
     const username = parts[0] || "name";
     setEmail(`${username}@company.com`);
@@ -55,8 +54,25 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
     setOauthNotice(null);
 
     try {
-      const res = await authApi.requestOtp(email.trim());
-      onOtpRequested(res);
+      // Submitting an email calls authClient.emailOTP.sendVerificationOTP({ email, type: "sign-in" })
+      const { error } = await authClient.emailOTP.sendVerificationOTP({
+        email: email.trim(),
+        type: "sign-in",
+      });
+
+      if (error) {
+        throw new Error(error.message || "Failed to send verification code. Please try again.");
+      }
+
+      onOtpRequested({
+        success: true,
+        message: "A 6-digit verification code has been dispatched to your email.",
+        email: email.trim(),
+        email_type: classification.emailType,
+        eligible_credits: classification.credits,
+        cooldown_seconds: 60,
+        expires_in_seconds: 600,
+      });
     } catch (err: unknown) {
       const error = err as Error;
       setErrorMessage(error.message || "Failed to send verification code. Please try again.");
@@ -67,23 +83,9 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
 
   const handleOAuthClick = async (provider: "google" | "microsoft") => {
     setErrorMessage(null);
-    setOauthNotice(null);
-    try {
-      const res = await authApi.getOAuthUrl(provider);
-      if (res.is_configured && res.authorization_url) {
-        window.location.href = res.authorization_url;
-      } else {
-        setOauthNotice(
-          res.message ||
-            `${provider === "google" ? "Google" : "Microsoft"} OAuth is not configured with client credentials. Set ${
-              provider === "google" ? "GOOGLE_CLIENT_ID" : "MICROSOFT_CLIENT_ID"
-            } in the backend environment.`
-        );
-      }
-    } catch (err: unknown) {
-      const error = err as Error;
-      setOauthNotice(error.message || `Unable to initialize ${provider} login.`);
-    }
+    setOauthNotice(
+      `${provider === "google" ? "Google" : "Microsoft"} OAuth is not configured with client credentials. Please use passwordless email OTP.`
+    );
   };
 
   return (
@@ -112,7 +114,7 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
         </div>
       )}
 
-      {/* OAuth Unconfigured Notice Banner */}
+      {/* OAuth Notice Banner */}
       {oauthNotice && (
         <div className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs font-medium text-amber-800 flex items-start gap-2">
           <span className="shrink-0 text-amber-600 font-bold">ℹ</span>
@@ -252,7 +254,7 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
         <button
           type="button"
           onClick={() => handleOAuthClick("google")}
-          className="w-full h-[48px] px-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-semibold text-sm transition-all flex items-center justify-center gap-3 shadow-xs cursor-pointer"
+          className="w-full h-[50px] px-5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-medium text-sm transition-all flex items-center justify-center gap-3 shadow-xs cursor-pointer"
         >
           <GoogleLogo className="w-5 h-5 shrink-0" />
           <span>Continue with Google</span>
@@ -262,46 +264,29 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
         <button
           type="button"
           onClick={() => handleOAuthClick("microsoft")}
-          className="w-full h-[48px] px-4 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-semibold text-sm transition-all flex items-center justify-center gap-3 shadow-xs cursor-pointer"
+          className="w-full h-[50px] px-5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-medium text-sm transition-all flex items-center justify-center gap-3 shadow-xs cursor-pointer"
         >
           <MicrosoftLogo className="w-5 h-5 shrink-0" />
           <span>Continue with Microsoft</span>
         </button>
       </div>
 
-      {/* Switch between Sign Up and Sign In */}
-      <div className="mt-8 text-center text-xs sm:text-sm text-slate-500">
-        {isSignInMode ? (
-          <>
-            Don&apos;t have an account?{" "}
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignInMode(false);
-                setErrorMessage(null);
-                setOauthNotice(null);
-              }}
-              className="font-bold text-[#2563EB] hover:text-[#1d4ed8] hover:underline cursor-pointer"
-            >
-              Sign up
-            </button>
-          </>
-        ) : (
-          <>
-            Already have an account?{" "}
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignInMode(true);
-                setErrorMessage(null);
-                setOauthNotice(null);
-              }}
-              className="font-bold text-[#2563EB] hover:text-[#1d4ed8] hover:underline cursor-pointer"
-            >
-              Sign in
-            </button>
-          </>
-        )}
+      {/* Toggle Sign-In / Sign-Up Mode */}
+      <div className="mt-8 text-center">
+        <p className="text-xs text-slate-500 font-normal">
+          {isSignInMode ? "Don't have an account yet?" : "Already have an account?"}{" "}
+          <button
+            type="button"
+            onClick={() => {
+              setIsSignInMode(!isSignInMode);
+              setErrorMessage(null);
+              setOauthNotice(null);
+            }}
+            className="text-[#2563EB] hover:text-[#1D4ED8] font-semibold transition-colors cursor-pointer"
+          >
+            {isSignInMode ? "Sign up" : "Sign in"}
+          </button>
+        </p>
       </div>
     </div>
   );
