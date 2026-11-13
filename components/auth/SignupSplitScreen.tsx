@@ -96,10 +96,9 @@ export function SignupSplitScreen() {
   };
 
   return (
-    <div className="w-full min-h-screen flex flex-col lg:flex-row bg-white">
-      {/* LEFT SECTION — AUTHENTICATION FORM (~48-50% width) */}
-      <section className="w-full lg:w-[49%] xl:w-[48%] flex items-center justify-center py-10 px-6 sm:px-12 md:px-16 xl:px-24 bg-white z-10">
-        <div className="w-full max-w-110">
+    <div className="flex h-full max-h-full w-full overflow-hidden bg-white lg:flex-row">
+      <section className="z-10 flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-white px-6 py-4 sm:px-12 lg:w-[60%] lg:px-14 lg:py-2 xl:px-20">
+        <div className="w-full max-w-[420px]">
           {screenState === "form" && (
             <SignupForm onOtpRequested={handleOtpRequested} />
           )}
@@ -123,8 +122,7 @@ export function SignupSplitScreen() {
         </div>
       </section>
 
-      {/* RIGHT SECTION — ILLUSTRATION SECTION (~50-52% width) */}
-      <section className="w-full lg:w-[51%] xl:w-[52%] min-h-125 lg:min-h-screen flex items-center justify-center">
+      <section className="hidden h-full min-h-0 w-[40%] lg:block">
         <AuthIllustration />
       </section>
     </div>

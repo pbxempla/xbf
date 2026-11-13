@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Loader2, RefreshCw } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { setAuthToken } from "@/lib/api";
 import { AuthSessionResponse, UserProfile } from "@/types/auth";
+import { XemplaLogo } from "@/components/icons/Icons";
 
 interface OtpVerificationProps {
   email: string;
@@ -199,44 +200,42 @@ export function OtpVerification({
   };
 
   return (
-    <div className="w-full flex flex-col animate-fade-in">
-      {/* Back button */}
+    <div className="flex w-full flex-col font-sans text-[#191c1f] animate-fade-in">
+      <div className="mb-12">
+        <XemplaLogo />
+      </div>
+
       <button
         type="button"
         onClick={onChangeEmail}
-        className="self-start inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-slate-800 transition-colors mb-8 cursor-pointer group"
+        className="group mb-7 inline-flex min-h-11 items-center gap-2 text-sm font-medium text-[#505a63] transition-colors hover:text-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
       >
-        <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
-        <span>Back to email address</span>
+        <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+        <span>Change email address</span>
       </button>
 
-      {/* Heading */}
-      <h1 className="text-3xl sm:text-[34px] font-extrabold tracking-tight text-[#0F172A] font-sans leading-tight">
+      <h1 className="text-[34px] font-medium leading-[1.08] tracking-[-0.04em] text-[#191c1f] sm:text-[40px]">
         Enter verification code
       </h1>
 
-      {/* Subtitle */}
-      <p className="text-[14px] text-slate-500 mt-2.5 font-normal leading-relaxed">
-        We sent a 6-digit code to <strong className="text-slate-900 font-semibold">{email}</strong>.
-        Enter it below to sign in and claim your{" "}
-        <span className="font-bold text-[#2563EB]">{eligibleCredits} credits</span>.
+      <p className="mt-3 text-sm leading-6 text-[#505a63]">
+        We sent a 6-digit code to <strong className="font-semibold text-[#191c1f]">{email}</strong>.
+        Enter it below to continue and claim{" "}
+        <span className="font-semibold text-[#191c1f]">{eligibleCredits} credits</span>.
       </p>
 
-      {/* Error / Alert */}
       {errorMessage && (
-        <div className="mt-5 p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-medium text-red-700 animate-fade-in">
+        <div role="alert" className="mt-5 rounded-xl border border-[#e23b4a]/20 bg-[#e23b4a]/5 px-4 py-3 text-sm text-[#8b0000] animate-fade-in">
           {errorMessage}
         </div>
       )}
 
-      {/* Info Notice (e.g. Resent) */}
       {infoMessage && (
-        <div className="mt-5 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-medium text-emerald-800 animate-fade-in">
+        <div role="status" className="mt-5 rounded-xl border border-[#00a87e]/20 bg-[#00a87e]/5 px-4 py-3 text-sm text-[#006400] animate-fade-in">
           {infoMessage}
         </div>
       )}
 
-      {/* 6-Digit OTP Input Form */}
       <form onSubmit={handleSubmit} className="mt-8 flex flex-col">
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           {digits.map((digit, idx) => (
@@ -254,20 +253,20 @@ export function OtpVerification({
               onKeyDown={(e) => handleKeyDown(idx, e)}
               onPaste={handlePaste}
               disabled={loading}
-              className={`w-11 h-14 sm:w-13 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-xl border transition-all outline-none ${
+              aria-label={`Verification digit ${idx + 1}`}
+              className={`h-14 min-w-0 flex-1 rounded-xl border text-center text-xl font-medium text-[#191c1f] outline-none transition-colors focus:border-[#494fdf] focus:ring-2 focus:ring-[#494fdf]/15 sm:h-14 sm:text-2xl ${
                 digit
-                  ? "border-[#3B28CC] bg-indigo-50/20 text-[#1E1B4B]"
-                  : "border-slate-200 bg-white text-slate-900"
-              } focus:border-[#3B28CC] focus:ring-4 focus:ring-indigo-100/70`}
+                  ? "border-[#494fdf] bg-white"
+                  : "border-[#e2e2e7] bg-white"
+              }`}
             />
           ))}
         </div>
 
-        {/* Submit Verification Button */}
         <button
           type="submit"
           disabled={loading || digits.join("").length < 6}
-          className="mt-7 w-full h-12.5 px-5 rounded-xl bg-[#2b26c7] hover:bg-[#251fb8] text-white font-medium text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+          className="mt-7 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black px-5 text-sm font-semibold tracking-[0.01em] text-white transition-colors hover:bg-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? (
             <div className="flex items-center gap-2">
@@ -283,15 +282,14 @@ export function OtpVerification({
         </button>
       </form>
 
-      {/* Resend Code Section with Countdown */}
-      <div className="mt-6 flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-slate-100">
+      <div className="mt-6 flex items-center justify-between gap-3 border-t border-[#e2e2e7] pt-4 text-sm text-[#505a63]">
         <span>Didn&apos;t receive the code?</span>
 
         <button
           type="button"
           onClick={handleResendOtp}
           disabled={countdown > 0 || resending}
-          className="inline-flex items-center gap-1.5 font-semibold text-[#2563EB] hover:text-[#1D4ED8] disabled:text-slate-400 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          className="inline-flex min-h-11 items-center gap-1.5 font-semibold text-[#376cd5] transition-colors hover:text-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] disabled:cursor-not-allowed disabled:text-[#8d969e]"
         >
           {resending ? (
             <>

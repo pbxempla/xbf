@@ -14,13 +14,13 @@ export function XemplaLogo({ className = "h-7" }: { className?: string }) {
       >
         <defs>
           <linearGradient id="xempla-grad-1" x1="2" y1="4" x2="26" y2="24" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#3B82F6" />
-            <stop offset="0.5" stopColor="#4F46E5" />
-            <stop offset="1" stopColor="#312E81" />
+            <stop stopColor="#494fdf" />
+            <stop offset="0.5" stopColor="#494fdf" />
+            <stop offset="1" stopColor="#3a40c4" />
           </linearGradient>
           <linearGradient id="xempla-grad-2" x1="26" y1="4" x2="2" y2="24" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#6366F1" />
-            <stop offset="1" stopColor="#2563EB" />
+            <stop stopColor="#4f55f1" />
+            <stop offset="1" stopColor="#494fdf" />
           </linearGradient>
         </defs>
         {/* Stroke 1 */}
@@ -38,7 +38,7 @@ export function XemplaLogo({ className = "h-7" }: { className?: string }) {
           strokeLinecap="round"
         />
       </svg>
-      <span className="text-[22px] font-bold tracking-tight text-[#0F172A] font-sans">
+      <span className="text-[22px] font-medium tracking-tight text-[#191c1f] font-sans">
         Xempla
       </span>
     </div>

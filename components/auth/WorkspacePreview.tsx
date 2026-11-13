@@ -49,21 +49,21 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
       : 0;
 
   return (
-    <div className="w-full flex flex-col animate-fade-in">
-      <div className="mb-8">
+    <div className="auth-success-content w-full flex flex-col animate-fade-in">
+      <div className="auth-success-brand mb-8">
         <XemplaLogo />
       </div>
 
       {/* Success Banner */}
-      <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-start gap-3.5 mb-6">
-        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
+      <div className="auth-success-banner mb-6 flex items-start gap-3.5 rounded-xl border border-[#00a87e]/20 bg-[#00a87e]/5 p-4">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#00a87e]/10 text-[#006400]">
           <CheckCircle2 className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-emerald-950">
+          <h3 className="text-sm font-semibold text-[#191c1f]">
             {is_new_user ? "Account Successfully Created!" : "Welcome Back!"}
           </h3>
-          <p className="text-xs text-emerald-700 mt-0.5">
+          <p className="mt-0.5 text-xs text-[#505a63]">
             {is_new_user
               ? `You have been awarded ${credits_awarded} initial credits for your ${user.email_type || user.emailType} account.`
               : `Signed in as ${user.email}.`}
@@ -72,21 +72,21 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
       </div>
 
       {/* User Card */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col gap-5">
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100">
+      <div className="auth-success-card flex flex-col gap-5 rounded-[20px] border border-[#e2e2e7] bg-white p-6">
+        <div className="flex items-center justify-between border-b border-[#e2e2e7] pb-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-md shadow-indigo-500/20">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#494fdf] text-lg font-semibold text-white">
               {user.email.charAt(0).toUpperCase()}
             </div>
             <div>
-              <div className="text-sm font-bold text-slate-900">{user.email}</div>
-              <div className="text-xs text-slate-400 capitalize flex items-center gap-1.5 mt-0.5">
+              <div className="text-sm font-semibold text-[#191c1f]">{user.email}</div>
+              <div className="mt-0.5 flex items-center gap-1.5 text-xs capitalize text-[#505a63]">
                 {isWork ? (
-                  <span className="inline-flex items-center gap-1 text-blue-600 font-medium">
+                  <span className="inline-flex items-center gap-1 font-medium text-[#376cd5]">
                     <Building className="w-3 h-3" /> Work Email Account
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 text-indigo-600 font-medium">
+                  <span className="inline-flex items-center gap-1 font-medium text-[#494fdf]">
                     <User className="w-3 h-3" /> Personal Email Account
                   </span>
                 )}
@@ -94,50 +94,50 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
             </div>
           </div>
 
-          <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-100">
+          <span className="rounded-full border border-[#00a87e]/20 bg-[#00a87e]/5 px-2.5 py-1 text-xs font-semibold text-[#006400]">
             Verified
           </span>
         </div>
 
         {/* Live Credit Balance Display */}
-        <div className="p-4 rounded-xl bg-linear-to-br from-[#1E1B4B] to-[#312E81] text-white flex items-center justify-between shadow-lg shadow-indigo-900/10">
+        <div className="flex items-center justify-between rounded-xl bg-black p-4 text-white">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center text-amber-300">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#ec7e00]">
               <Coins className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-[11px] font-medium text-indigo-200 uppercase tracking-wider">
+              <div className="text-[11px] font-medium uppercase tracking-wider text-white/60">
                 Available Credits
               </div>
-              <div className="text-2xl font-black text-white">
-                {creditBalance} <span className="text-sm font-medium text-indigo-200">Credits</span>
+              <div className="text-2xl font-medium text-white">
+              {creditBalance} <span className="text-sm font-medium text-white/60">Credits</span>
               </div>
             </div>
           </div>
 
           <div className="text-right">
-            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/15 text-white text-xs font-semibold backdrop-blur-xs">
-              <Sparkles className="w-3 h-3 text-amber-300" />
+            <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-white">
+              <Sparkles className="h-3 w-3 text-[#ec7e00]" />
               {isWork ? "+200 Tier" : "+150 Tier"}
             </span>
           </div>
         </div>
 
         {/* Account Details Metadata */}
-        <div className="flex flex-col gap-2.5 text-xs text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-100">
+        <div className="flex flex-col gap-2.5 rounded-xl border border-[#e2e2e7] bg-[#f4f4f4] p-4 text-xs text-[#505a63]">
           <div className="flex justify-between items-center">
             <span>Account Type</span>
-            <span className="font-semibold text-slate-800 capitalize">
+            <span className="font-semibold capitalize text-[#191c1f]">
               {user.email_type || user.emailType} Email
             </span>
           </div>
           <div className="flex justify-between items-center">
             <span>Authentication</span>
-            <span className="font-semibold text-slate-800">Passwordless OTP (Better Auth)</span>
+            <span className="font-semibold text-[#191c1f]">Passwordless OTP (Better Auth)</span>
           </div>
           <div className="flex justify-between items-center">
             <span>Initial Reward</span>
-            <span className="font-semibold text-emerald-600">
+            <span className="font-semibold text-[#006400]">
               +{isWork ? "200" : "150"} Credits Granted
             </span>
           </div>
@@ -147,7 +147,7 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
         <button
           type="button"
           onClick={() => router.push("/upload")}
-          className="w-full h-11 rounded-xl bg-[#2B26C7] hover:bg-[#201CB0] active:scale-[0.99] text-white text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-indigo-600/20"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black text-sm font-semibold text-white transition-colors hover:bg-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
         >
           <span>Continue to Data Upload</span>
           <ArrowRight className="w-4 h-4" />
@@ -157,9 +157,9 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
         <button
           type="button"
           onClick={handleLogout}
-          className="w-full h-11 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#e2e2e7] text-sm font-semibold text-[#191c1f] transition-colors hover:bg-[#f4f4f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
         >
-          <LogOut className="w-4 h-4 text-slate-500" />
+          <LogOut className="h-4 w-4 text-[#505a63]" />
           <span>Sign out of Xempla</span>
         </button>
       </div>
