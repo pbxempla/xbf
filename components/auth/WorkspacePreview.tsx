@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import { LogOut, CheckCircle2, Coins, Sparkles, Building, User, ArrowRight } from "lucide-react";
 import { AuthSessionResponse } from "@/types/auth";
-import { XemplaLogo } from "@/components/icons/Icons";
 
 interface WorkspacePreviewProps {
   session: AuthSessionResponse;
@@ -33,20 +32,16 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
 
   return (
     <div className="auth-success-content w-full flex flex-col animate-fade-in">
-      <div className="auth-success-brand mb-8">
-        <XemplaLogo />
-      </div>
-
       {/* Success Banner */}
-      <div className="auth-success-banner mb-6 flex items-start gap-3.5 rounded-xl border border-[#00a87e]/20 bg-[#00a87e]/5 p-4">
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#00a87e]/10 text-[#006400]">
-          <CheckCircle2 className="w-5 h-5" />
+      <div className="auth-success-banner mb-6 flex items-start gap-4 rounded-xl border border-[#00a87e]/20 bg-[#00a87e]/5 p-5 sm:p-6">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#00a87e]/10 text-[#006400]">
+          <CheckCircle2 className="h-6 w-6" />
         </div>
         <div>
-          <h3 className="text-sm font-semibold text-[#191c1f]">
+          <h3 className="text-base font-semibold text-[#191c1f]">
             {is_new_user ? "Account Successfully Created!" : "Welcome Back!"}
           </h3>
-          <p className="mt-0.5 text-xs text-[#505a63]">
+          <p className="mt-1 text-sm leading-5 text-[#505a63]">
             {is_new_user
             ? `You have been awarded ${credits_awarded} initial credits for your ${user.email_type} account.`
               : `Signed in as ${user.email}.`}
@@ -55,73 +50,53 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
       </div>
 
       {/* User Card */}
-      <div className="auth-success-card flex flex-col gap-5 rounded-[20px] border border-[#e2e2e7] bg-white p-6">
-        <div className="flex items-center justify-between border-b border-[#e2e2e7] pb-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#494fdf] text-lg font-semibold text-white">
+      <div className="auth-success-card flex flex-col gap-5 rounded-[20px] border border-[#e2e2e7] bg-white p-5 sm:gap-6 sm:p-8 lg:p-10">
+        <div className="flex items-center justify-between gap-4 border-b border-[#e2e2e7] pb-5">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-[#494fdf] text-xl font-semibold text-white sm:h-16 sm:w-16">
               {user.email.charAt(0).toUpperCase()}
             </div>
-            <div>
-              <div className="text-sm font-semibold text-[#191c1f]">{user.email}</div>
-              <div className="mt-0.5 flex items-center gap-1.5 text-xs capitalize text-[#505a63]">
+            <div className="min-w-0">
+              <div className="break-all text-base font-semibold text-[#191c1f] sm:text-lg">{user.email}</div>
+              <div className="mt-1 flex items-center gap-1.5 text-sm capitalize text-[#505a63]">
                 {isWork ? (
                   <span className="inline-flex items-center gap-1 font-medium text-[#376cd5]">
-                    <Building className="w-3 h-3" /> Work Email Account
+                    <Building className="h-4 w-4" /> Work Email Account
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 font-medium text-[#494fdf]">
-                    <User className="w-3 h-3" /> Personal Email Account
+                    <User className="h-4 w-4" /> Personal Email Account
                   </span>
                 )}
               </div>
             </div>
           </div>
 
-          <span className="rounded-full border border-[#00a87e]/20 bg-[#00a87e]/5 px-2.5 py-1 text-xs font-semibold text-[#006400]">
+          <span className="shrink-0 rounded-full border border-[#00a87e]/20 bg-[#00a87e]/5 px-3 py-1.5 text-sm font-semibold text-[#006400]">
             Verified
           </span>
         </div>
 
         {/* Live Credit Balance Display */}
-        <div className="flex items-center justify-between rounded-xl bg-black p-4 text-white">
+        <div className="flex items-center justify-between gap-4 rounded-xl bg-black p-5 text-white sm:p-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#ec7e00]">
-              <Coins className="w-5 h-5" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 text-[#ec7e00]">
+              <Coins className="h-6 w-6" />
             </div>
             <div>
-              <div className="text-[11px] font-medium uppercase tracking-wider text-white/60">
+              <div className="text-xs font-medium uppercase tracking-wider text-white/60">
                 Available Credits
               </div>
-              <div className="text-2xl font-medium text-white">
-              {creditBalance} <span className="text-sm font-medium text-white/60">Credits</span>
+              <div className="text-3xl font-medium text-white">
+                {creditBalance} <span className="text-base font-medium text-white/60">Credits</span>
               </div>
             </div>
           </div>
 
           <div className="text-right">
-            <span className="inline-flex items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold text-white">
-              <Sparkles className="h-3 w-3 text-[#ec7e00]" />
+            <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-sm font-semibold text-white">
+              <Sparkles className="h-4 w-4 text-[#ec7e00]" />
               {isWork ? "+200 Tier" : "+150 Tier"}
-            </span>
-          </div>
-        </div>
-
-        {/* Account Details Metadata */}
-        <div className="flex flex-col gap-2.5 rounded-xl border border-[#e2e2e7] bg-[#f4f4f4] p-4 text-xs text-[#505a63]">
-          <div className="flex justify-between items-center">
-            <span>Account Type</span>
-            <span className="font-semibold capitalize text-[#191c1f]">
-              {user.email_type} Email
-            </span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span>Authentication</span>
-            <span className="font-semibold text-[#191c1f]">Passwordless OTP (Better Auth)</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span>Initial Reward</span>
-            <span className="font-semibold text-[#006400]">
-              {is_new_user ? `+${credits_awarded} Credits Granted` : "No new credits"}
             </span>
           </div>
         </div>
@@ -130,7 +105,7 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
         <button
           type="button"
           onClick={() => router.push("/upload")}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black text-sm font-semibold text-white transition-colors hover:bg-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black text-sm font-semibold text-white transition-colors hover:bg-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] sm:h-14 sm:text-base"
         >
           <span>Continue to Data Upload</span>
           <ArrowRight className="w-4 h-4" />
@@ -140,7 +115,7 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
         <button
           type="button"
           onClick={onLogout}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#e2e2e7] text-sm font-semibold text-[#191c1f] transition-colors hover:bg-[#f4f4f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#e2e2e7] text-sm font-semibold text-[#191c1f] transition-colors hover:bg-[#f4f4f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] sm:h-14 sm:text-base"
         >
           <LogOut className="h-4 w-4 text-[#505a63]" />
           <span>Sign out of Xempla</span>
