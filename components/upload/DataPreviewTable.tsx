@@ -11,44 +11,44 @@ interface DataPreviewTableProps {
 
 export function DataPreviewTable({ data, isLoading }: DataPreviewTableProps) {
   return (
-    <div className="flex-1 min-h-35 lg:min-h-0 flex flex-col w-full">
-      <h3 className="text-xs font-bold text-[#101744] mb-1.5 shrink-0">
-        Preview (First 5 Rows)
-      </h3>
+    <section className="flex min-h-[220px] w-full flex-1 flex-col">
+      <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-[#191c1f]">Data preview</h3>
+        <span className="rounded-full bg-[#f4f4f4] px-3 py-1 text-xs text-[#5c5e60]">
+          First 5 rows
+        </span>
+      </div>
 
       {data && data.headers.length > 0 ? (
-        <div className="flex-1 min-h-0 w-full border border-[#E9E5FF] rounded-xl overflow-hidden bg-white shadow-2xs flex flex-col">
-          <div className="w-full flex-1 min-h-0 overflow-auto scrollbar-thin">
-            <table className="w-full text-left border-collapse text-[11px]">
-              <thead>
-                <tr className="bg-[#EEF1FF] border-b border-[#E3DEFF] sticky top-0 z-10">
-                  {data.headers.map((header, idx) => (
+        <div className="flex min-h-[200px] flex-1 overflow-hidden rounded-xl border border-[#e2e2e7] bg-white">
+          <div className="w-full overflow-auto">
+            <table className="w-full border-collapse text-left text-xs">
+              <thead className="sticky top-0 z-10 bg-[#f4f4f4]">
+                <tr className="border-b border-[#e2e2e7]">
+                  {data.headers.map((header, index) => (
                     <th
-                      key={idx}
-                      className="px-3 py-1.5 text-[#101744] font-semibold whitespace-nowrap select-none bg-[#EEF1FF]"
+                      key={index}
+                      className="whitespace-nowrap px-3 py-2.5 font-semibold text-[#191c1f]"
                     >
                       {header}
                     </th>
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F4F1FF]">
-                {data.rows.map((row, rowIdx) => (
-                  <tr
-                    key={rowIdx}
-                    className="hover:bg-[#F9F8FF] transition-colors"
-                  >
-                    {data.headers.map((header, colIdx) => {
-                      const val = row[header];
-                      const displayVal =
-                        val !== null && val !== undefined ? String(val) : "";
+              <tbody className="divide-y divide-[#e2e2e7]">
+                {data.rows.map((row, rowIndex) => (
+                  <tr key={rowIndex} className="hover:bg-[#f4f4f4]">
+                    {data.headers.map((header, columnIndex) => {
+                      const value = row[header];
+                      const displayValue = value !== null && value !== undefined ? String(value) : "";
+
                       return (
                         <td
-                          key={colIdx}
-                          className="px-3 py-1.5 text-[#101744] whitespace-nowrap max-w-xs truncate font-normal"
-                          title={displayVal}
+                          key={columnIndex}
+                          title={displayValue}
+                          className="max-w-56 truncate whitespace-nowrap px-3 py-2.5 text-[#3a3d40]"
                         >
-                          {displayVal || <span className="text-slate-300 italic">null</span>}
+                          {displayValue || <span className="italic text-[#8d969e]">null</span>}
                         </td>
                       );
                     })}
@@ -59,16 +59,21 @@ export function DataPreviewTable({ data, isLoading }: DataPreviewTableProps) {
           </div>
         </div>
       ) : isLoading ? (
-        <div className="flex-1 min-h-30 w-full border border-[#E9E5FF] rounded-xl p-6 bg-white flex flex-col items-center justify-center text-[#64749A] gap-2 shadow-2xs">
-          <div className="w-5 h-5 border-2 border-[#3024D8] border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs">Parsing dataset preview...</span>
+        <div
+          role="status"
+          className="flex min-h-[200px] flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-[#e2e2e7] bg-[#f4f4f4] text-[#505a63]"
+        >
+          <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#494fdf] border-t-transparent" />
+          <span className="text-sm">Preparing your preview…</span>
         </div>
       ) : (
-        <div className="flex-1 min-h-30 w-full border border-dashed border-[#DDD7FE] rounded-xl p-4 bg-[#F8F7FF] flex flex-col items-center justify-center text-[#64749A] gap-1.5 shadow-2xs">
-          <TableIcon className="w-5 h-5 stroke-[1.5] text-indigo-400" />
-          <span className="text-xs">No dataset preview to display yet. Upload a CSV or Excel file to preview data.</span>
+        <div className="flex min-h-[200px] flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[#c9c9cd] bg-[#f4f4f4] px-5 text-center text-[#5c5e60]">
+          <TableIcon aria-hidden="true" className="h-6 w-6" />
+          <p className="max-w-xs text-sm leading-5">
+            Your first rows will appear here once a file is selected.
+          </p>
         </div>
       )}
-    </div>
+    </section>
   );
 }

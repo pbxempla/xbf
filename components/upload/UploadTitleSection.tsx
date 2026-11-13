@@ -4,16 +4,34 @@ import React from "react";
 
 export function UploadTitleSection() {
   return (
-    <div className="shrink-0 w-full flex items-start justify-between pb-3 sm:pb-4 pt-1 z-10">
-      {/* Title & Subtitle on Upper Left */}
-      <div className="flex flex-col gap-1 max-w-xl">
-        <h1 className="text-2xl sm:text-[28px] font-extrabold text-[#101744] tracking-tight leading-tight">
-          Upload Your Data
+    <div className="flex shrink-0 flex-col gap-6 pb-7 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#5c5e60]">
+          Data workspace
+        </p>
+        <h1 className="text-[36px] font-medium leading-[1.05] tracking-[-0.04em] text-[#191c1f] sm:text-[40px]">
+          Upload your data
         </h1>
-        <p className="text-xs sm:text-sm text-[#64749A] font-normal">
-          Import your dataset to start mapping and processing in Xempla.
+        <p className="mt-3 max-w-xl text-sm leading-6 text-[#505a63] sm:text-base">
+          Bring your facility data into Xempla to prepare it for mapping.
         </p>
       </div>
+
+      <ol aria-label="Import progress" className="flex items-center gap-3 text-xs sm:gap-4">
+        <li aria-current="step" className="flex items-center gap-2 font-semibold text-[#191c1f]">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-black text-white">
+            1
+          </span>
+          Upload
+        </li>
+        <li aria-hidden="true" className="h-px w-8 bg-[#e2e2e7] sm:w-12" />
+        <li className="flex items-center gap-2 text-[#8d969e]">
+          <span className="flex h-7 w-7 items-center justify-center rounded-full border border-[#e2e2e7] bg-white">
+            2
+          </span>
+          Map data
+        </li>
+      </ol>
     </div>
   );
 }

@@ -1,6 +1,12 @@
 import React from "react";
 
-export function XemplaLogo({ className = "h-7" }: { className?: string }) {
+export function XemplaLogo({
+  className = "h-7",
+  onDark = false,
+}: {
+  className?: string;
+  onDark?: boolean;
+}) {
   return (
     <div className={`flex items-center gap-2.5 ${className}`}>
       {/* Stylized Modern X Mark */}
@@ -38,7 +44,11 @@ export function XemplaLogo({ className = "h-7" }: { className?: string }) {
           strokeLinecap="round"
         />
       </svg>
-      <span className="text-[22px] font-medium tracking-tight text-[#191c1f] font-sans">
+      <span
+        className={`text-[22px] font-medium tracking-tight font-sans ${
+          onDark ? "text-white" : "text-[#191c1f]"
+        }`}
+      >
         Xempla
       </span>
     </div>

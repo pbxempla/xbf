@@ -59,9 +59,9 @@ export default function UploadPage() {
 
   if (isPending) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-linear-to-b from-[#F5F6FE] via-[#EDF0FE] to-[#F5F7FF]">
-        <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-xs text-slate-500 font-medium">Loading session...</p>
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-white">
+        <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-[#494fdf] border-t-transparent" />
+        <p className="text-sm text-[#505a63]">Loading session...</p>
       </div>
     );
   }
@@ -69,8 +69,8 @@ export default function UploadPage() {
   if (!session || profileError) {
     if (profileError) {
       return (
-        <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-[#F5F6FE] px-6 text-center">
-          <p role="alert" className="text-sm text-red-700">{profileError}</p>
+        <div className="flex min-h-screen flex-col items-center justify-center gap-5 bg-white px-6 text-center">
+          <p role="alert" className="max-w-md text-sm leading-6 text-[#8b0000]">{profileError}</p>
           <button
             type="button"
             onClick={() => {
@@ -78,7 +78,7 @@ export default function UploadPage() {
               setProfileError(null);
               setRetryCount((count) => count + 1);
             }}
-            className="rounded-full bg-black px-5 py-2.5 text-sm font-semibold text-white"
+            className="flex h-12 items-center justify-center rounded-full bg-black px-6 text-sm font-semibold text-white transition-colors hover:bg-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
           >
             Retry
           </button>
@@ -90,9 +90,9 @@ export default function UploadPage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#F5F6FE]">
-        <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-xs text-slate-500 font-medium">Loading your workspace...</p>
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-white">
+        <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-[#494fdf] border-t-transparent" />
+        <p className="text-sm text-[#505a63]">Loading your workspace...</p>
       </div>
     );
   }

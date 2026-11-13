@@ -9,7 +9,6 @@ import { FileDropzone } from "./FileDropzone";
 import { UploadedFileCard } from "./UploadedFileCard";
 import { FileValidationCard } from "./FileValidationCard";
 import { DataPreviewTable } from "./DataPreviewTable";
-import { BackgroundDecorations } from "./BackgroundDecorations";
 import { ParsedFileData, ValidationItem } from "@/types/upload";
 import { validateSelectedFile } from "@/lib/upload/file-validator";
 import { parseDatasetFile } from "@/lib/upload/file-parser";
@@ -23,7 +22,7 @@ interface UploadScreenProps {
 }
 
 const DEFAULT_VALIDATION_ITEMS: ValidationItem[] = [
-  { id: "format", label: "File format supported (.xlsx)", passed: false },
+  { id: "format", label: "File format supported (CSV, XLS, XLSX)", passed: false },
   { id: "size", label: "File size within limit (Max 100 MB)", passed: false },
   { id: "readable", label: "File is readable", passed: false },
   { id: "preview", label: "Data preview available", passed: false },
@@ -115,11 +114,7 @@ export function UploadScreen({
   };
 
   return (
-    <div className="min-h-screen lg:h-screen lg:max-h-screen w-full bg-linear-to-br from-[#FAF8FF] via-[#F4F1FF] to-[#ECE7FE] flex flex-col justify-between overflow-y-auto lg:overflow-hidden relative select-none">
-      {/* 3D Floating Pillows & Wave Background Decoration */}
-      <BackgroundDecorations />
-
-      {/* Top Header */}
+    <div className="flex min-h-screen w-full flex-col bg-white text-[#191c1f]">
       <UploadHeader
         userEmail={userEmail}
         userName={userName}
@@ -128,23 +123,14 @@ export function UploadScreen({
         onLogout={onLogout}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1 min-h-0 w-full px-6 sm:px-8 lg:px-10 pt-2 sm:pt-3 pb-3 sm:pb-4 flex flex-col justify-between z-10">
-        {/* Page Heading on Upper Left */}
+      <main className="mx-auto flex w-full max-w-[1360px] flex-1 flex-col px-5 py-8 sm:px-8 sm:py-10 lg:px-10">
         <UploadTitleSection />
 
-        {/* 50% / 50% Two-Column Layout */}
-        <div className="flex-1 min-h-0 w-full flex flex-col lg:flex-row gap-5 lg:gap-6 items-stretch mb-2.5">
-          {/* Left Column (~50% width): Upload Dropzone with 3D Purple Folder */}
-          <div className="w-full lg:w-[50%] flex flex-col min-h-0">
-            <FileDropzone
-              onFileSelected={handleFileSelected}
-              disabled={isValidating}
-            />
-          </div>
+        <div className="grid flex-1 items-stretch gap-5 lg:grid-cols-[1.05fr_.95fr] lg:gap-7">
+          <FileDropzone onFileSelected={handleFileSelected} disabled={isValidating} />
 
-          {/* Right Column (~50% width): White Card holding File Details, Validation, Preview */}
-          <div className="w-full lg:w-[50%] bg-white rounded-3xl p-4 sm:p-5 border border-[#E6E1FF] shadow-xs flex flex-col gap-3 min-h-0 justify-between">
+          <section className="flex min-h-[520px] flex-col gap-6 rounded-[20px] border border-[#e2e2e7] bg-white p-5 sm:p-6 lg:p-7">
+            <h2 className="text-xl font-medium tracking-tight text-[#191c1f]">Dataset details</h2>
             <UploadedFileCard
               data={parsedData}
               onRemove={handleRemoveFile}
@@ -157,28 +143,29 @@ export function UploadScreen({
               hasFile={Boolean(parsedData || errorMessage)}
               error={errorMessage}
             />
-
             <DataPreviewTable
               data={parsedData}
               isLoading={isValidating}
             />
-          </div>
+          </section>
         </div>
 
-        {/* Bottom Right: Continue to Mapping Action */}
-        <div className="shrink-0 w-full flex justify-end pt-1">
+        <div className="mt-6 flex w-full flex-col-reverse items-stretch justify-between gap-4 sm:flex-row sm:items-center">
+          <p className="text-xs leading-5 text-[#5c5e60]">
+            Next step: map your columns to Xempla fields.
+          </p>
           <button
             type="button"
             onClick={handleContinueToMapping}
             disabled={!isReadyToContinue}
-            className={`w-full sm:w-auto px-7 py-2.5 sm:py-3 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md ${
+            className={`inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-7 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] sm:w-auto ${
               isReadyToContinue
-                ? "bg-[#3024D8] hover:bg-[#251BB8] text-white active:scale-[0.99] shadow-indigo-600/25"
-                : "bg-[#D8D3FB] text-[#867CC8] cursor-not-allowed shadow-none"
+                ? "cursor-pointer bg-black text-white hover:bg-[#191c1f]"
+                : "cursor-not-allowed border border-[#e2e2e7] bg-[#f4f4f4] text-[#8d969e]"
             }`}
           >
-            <span>Continue to Mapping</span>
-            <ArrowRight className="w-4 h-4 stroke-[2.2]" />
+            <span>Continue to mapping</span>
+            <ArrowRight aria-hidden="true" className="h-4 w-4" />
           </button>
         </div>
       </main>

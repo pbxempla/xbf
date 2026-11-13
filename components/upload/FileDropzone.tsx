@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useRef, useState } from "react";
-import { Folder } from "lucide-react";
-import { FolderUploadIllustration } from "./FolderUploadIllustration";
+import { FolderOpen, UploadCloud } from "lucide-react";
 
 interface FileDropzoneProps {
   onFileSelected: (file: File) => void;
@@ -13,58 +12,52 @@ export function FileDropzone({ onFileSelected, disabled }: FileDropzoneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!disabled) {
-      setIsDragOver(true);
-    }
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!disabled) setIsDragOver(true);
   };
 
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
     setIsDragOver(false);
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
     setIsDragOver(false);
 
-    if (disabled) return;
-
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const droppedFile = e.dataTransfer.files[0];
-      onFileSelected(droppedFile);
+    if (!disabled && event.dataTransfer.files.length > 0) {
+      onFileSelected(event.dataTransfer.files[0]);
     }
   };
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const selectedFile = e.target.files[0];
-      onFileSelected(selectedFile);
-      e.target.value = "";
-    }
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) onFileSelected(file);
+    event.target.value = "";
   };
 
   const triggerBrowse = () => {
-    if (!disabled && fileInputRef.current) {
-      fileInputRef.current.click();
-    }
+    if (!disabled) fileInputRef.current?.click();
   };
 
   return (
     <div
+      role="region"
+      aria-label="Upload a dataset"
+      aria-busy={disabled}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={triggerBrowse}
-      className={`w-full flex-1 min-h-90 lg:min-h-0 bg-white/90 rounded-3xl p-4 sm:p-5 border border-[#E4E0FF] shadow-xs flex flex-col items-center justify-center cursor-pointer transition-all duration-200 ${
+      className={`flex min-h-[340px] flex-1 cursor-pointer flex-col items-center justify-center rounded-[20px] border border-dashed px-5 py-10 text-center transition-colors sm:min-h-[380px] lg:min-h-[520px] ${
         isDragOver
-          ? "border-[#5142F5] ring-2 ring-[#5142F5]/20 bg-[#F6F3FF]"
-          : "hover:border-[#C7BDFF]"
-      } ${disabled ? "opacity-60 cursor-not-allowed" : ""}`}
+          ? "border-[#494fdf] bg-[#f4f4f4] ring-2 ring-[#494fdf]/15"
+          : "border-[#c9c9cd] bg-white hover:border-[#191c1f] hover:bg-[#f4f4f4]"
+      } ${disabled ? "cursor-wait opacity-60" : ""}`}
     >
       <input
         ref={fileInputRef}
@@ -75,37 +68,38 @@ export function FileDropzone({ onFileSelected, disabled }: FileDropzoneProps) {
         disabled={disabled}
       />
 
-      {/* Dashed Border Inner Container matching screenshot */}
-      <div className="w-full h-full border border-dashed border-[#DDD7FE] rounded-2xl p-4 sm:p-6 flex flex-col items-center justify-center text-center">
-        {/* Prominent 3D Purple Folder Upload Illustration */}
-        <FolderUploadIllustration className="mb-2 sm:mb-3" />
+      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#f4f4f4] text-[#191c1f]">
+        <UploadCloud aria-hidden="true" className="h-7 w-7 stroke-[1.6]" />
+      </div>
 
-        {/* Text labels */}
-        <h3 className="text-base sm:text-lg font-bold text-[#101744] tracking-tight">
-          Drag &amp; drop your file here
-        </h3>
-        <p className="text-xs text-[#64749A] mt-0.5 mb-4 sm:mb-5">
-          or click to browse
-        </p>
+      <h2 className="text-xl font-medium tracking-tight text-[#191c1f] sm:text-2xl">
+        Drop your file here
+      </h2>
+      <p className="mt-2 text-sm text-[#505a63]">or choose one from your device</p>
 
-        {/* Browse Files Button */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            triggerBrowse();
-          }}
-          disabled={disabled}
-          className="px-6 py-2.5 rounded-xl bg-[#3024D8] hover:bg-[#251BB8] active:scale-[0.98] text-white text-xs sm:text-sm font-semibold flex items-center gap-2 shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
-        >
-          <Folder className="w-4 h-4 fill-white/20 stroke-white" />
-          <span>Browse Files</span>
-        </button>
+      <button
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          triggerBrowse();
+        }}
+        disabled={disabled}
+        className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-black px-6 text-sm font-semibold text-white transition-colors hover:bg-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] disabled:cursor-not-allowed disabled:opacity-60"
+      >
+        <FolderOpen aria-hidden="true" className="h-4 w-4" />
+        Browse files
+      </button>
 
-        {/* Constraints Footnote */}
-        <p className="text-[11px] text-[#64749A] mt-4 sm:mt-5 font-normal">
-          Supports CSV, XLS, XLSX &nbsp;|&nbsp; Max file size: 100 MB
-        </p>
+      <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-xs">
+        {["CSV", "XLS", "XLSX"].map((format) => (
+          <span
+            key={format}
+            className="rounded-full border border-[#e2e2e7] px-3 py-1.5 font-medium text-[#3a3d40]"
+          >
+            {format}
+          </span>
+        ))}
+        <span className="px-1 text-[#8d969e]">Up to 100 MB</span>
       </div>
     </div>
   );

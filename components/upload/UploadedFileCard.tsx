@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Trash2, FileText, UploadCloud } from "lucide-react";
+import { FileSpreadsheet, FileText, Trash2, UploadCloud } from "lucide-react";
 import { ParsedFileData } from "@/types/upload";
 
 interface UploadedFileCardProps {
@@ -14,53 +14,43 @@ export function UploadedFileCard({ data, onRemove, disabled }: UploadedFileCardP
   const isExcel = data && (data.fileType === "xls" || data.fileType === "xlsx");
 
   return (
-    <div className="shrink-0 w-full flex flex-col">
-      <h3 className="text-xs font-bold text-[#101744] mb-1.5">
-        Uploaded File
-      </h3>
+    <section className="flex w-full shrink-0 flex-col">
+      <h3 className="mb-2 text-sm font-semibold text-[#191c1f]">Uploaded file</h3>
 
       {data ? (
-        <div className="w-full bg-[#F8F7FF] border border-[#ECE8FF] rounded-xl p-2.5 sm:p-3 flex items-center justify-between transition-all">
-          <div className="flex items-center gap-3 min-w-0">
-            {/* File Icon */}
-            {isExcel ? (
-              <div className="w-9 h-9 rounded-lg bg-linear-to-br from-[#107C41] to-[#0A5C2F] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
-                X
-              </div>
-            ) : (
-              <div className="w-9 h-9 rounded-lg bg-indigo-50 border border-indigo-200 flex items-center justify-center shrink-0 text-indigo-600 shadow-2xs">
-                <FileText className="w-4.5 h-4.5 stroke-2" />
-              </div>
-            )}
-
-            {/* File Details */}
-            <div className="min-w-0 flex flex-col">
-              <span className="text-xs font-semibold text-[#101744] truncate">
-                {data.fileName}
-              </span>
-              <span className="text-[11px] text-[#64749A] mt-0.5">
-                {data.formattedSize} • {data.rowCount.toLocaleString()} rows • {data.columnCount} columns
+        <div className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#e2e2e7] bg-[#f4f4f4] p-3 sm:p-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#e2e2e7] bg-white text-[#191c1f]">
+              {isExcel ? (
+                <FileSpreadsheet aria-hidden="true" className="h-5 w-5" />
+              ) : (
+                <FileText aria-hidden="true" className="h-5 w-5" />
+              )}
+            </div>
+            <div className="flex min-w-0 flex-col">
+              <span className="truncate text-sm font-semibold text-[#191c1f]">{data.fileName}</span>
+              <span className="mt-1 text-xs text-[#5c5e60]">
+                {data.formattedSize} · {data.rowCount.toLocaleString()} rows · {data.columnCount} columns
               </span>
             </div>
           </div>
 
-          {/* Delete Action Button */}
           <button
             type="button"
             onClick={onRemove}
             disabled={disabled}
             aria-label="Remove uploaded file"
-            className="p-1.5 text-[#64749A] hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer shrink-0 ml-2"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#5c5e60] transition-colors hover:bg-white hover:text-[#e23b4a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <Trash2 className="w-4 h-4 stroke-[1.8]" />
+            <Trash2 aria-hidden="true" className="h-4 w-4" />
           </button>
         </div>
       ) : (
-        <div className="w-full bg-[#F8F7FF] border border-dashed border-[#DDD7FE] rounded-xl p-3 flex items-center gap-3 text-[#64749A]">
-          <UploadCloud className="w-4.5 h-4.5 stroke-[1.6] text-indigo-400 shrink-0" />
-          <span className="text-xs">No file selected yet. Select or drop a dataset on the left.</span>
+        <div className="flex w-full items-center gap-3 rounded-xl border border-[#e2e2e7] bg-[#f4f4f4] p-4 text-[#5c5e60]">
+          <UploadCloud aria-hidden="true" className="h-5 w-5 shrink-0" />
+          <span className="text-sm">Your selected file will appear here.</span>
         </div>
       )}
-    </div>
+    </section>
   );
 }

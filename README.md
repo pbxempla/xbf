@@ -19,6 +19,13 @@ Next.js uses `PORT` from the process environment for its listening port
 (default `3000`). Set it in the hosting platform or shell, not `.env`, since
 Next.js reads it before loading `.env`.
 
+Before testing authentication locally, copy `.env.example` to `.env` in this
+frontend directory and set `DATABASE_URL` to a Node `pg` connection string, for
+example `postgresql://USER:PASSWORD@HOST:5432/xempla_brief`. Replace the
+placeholders with your database credentials and host. Do not use the
+SQLAlchemy-specific `postgresql+psycopg2://` scheme; restart the dev server
+after changing environment variables.
+
 ## Deploying with environment variables
 
 Configure these values in the frontend hosting environment:
