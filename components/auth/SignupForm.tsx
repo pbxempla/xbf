@@ -117,9 +117,24 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
       )}
 
       <form onSubmit={handleSubmit} className="flex flex-col">
-        <label htmlFor="email-input" className="mb-2 text-sm font-semibold text-[#191c1f]">
-          Email address
-        </label>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <label htmlFor="email-input" className="text-sm font-semibold text-[#191c1f]">
+            Email address
+          </label>
+          {classification.isValid && !isSignInMode && (
+            <span aria-live="polite" className="inline-flex items-center gap-1.5 text-right text-xs text-[#505a63]">
+              {classification.emailType === "personal" ? (
+                <UserIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-[#494fdf]" />
+              ) : (
+                <Building2 aria-hidden="true" className="h-4 w-4 shrink-0 text-[#494fdf]" />
+              )}
+              <span>
+                {classification.emailType === "personal" ? "Personal" : "Work"} email ·{" "}
+                <span className="font-semibold text-[#191c1f]">{classification.credits} credits</span>
+              </span>
+            </span>
+          )}
+        </div>
         <div className="relative">
           <Mail aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#8d969e]" />
           <input
@@ -139,20 +154,6 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
           )}
         </div>
 
-        {classification.isValid && !isSignInMode && (
-          <div className="mt-3 flex items-center gap-2 text-xs text-[#505a63]">
-            {classification.emailType === "personal" ? (
-              <UserIcon aria-hidden="true" className="h-4 w-4 text-[#494fdf]" />
-            ) : (
-              <Building2 aria-hidden="true" className="h-4 w-4 text-[#494fdf]" />
-            )}
-            <span>
-              {classification.emailType === "personal" ? "Personal" : "Work"} email ·{" "}
-              <span className="font-semibold text-[#191c1f]">{classification.credits} credits</span>
-            </span>
-          </div>
-        )}
-
         <button
           type="submit"
           disabled={loading}
@@ -165,7 +166,11 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
             </span>
           ) : (
             <>
-              <span>Continue with email</span>
+              <span>
+                {!isSignInMode && classification.isValid
+                  ? `Continue with ${classification.credits} credits`
+                  : "Continue with email"}
+              </span>
               <ArrowRight className="h-4 w-4" />
             </>
           )}
@@ -175,13 +180,10 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
           <button
             type="button"
             onClick={handleUseWorkEmailInstead}
-            className="mt-3 flex min-h-11 w-full items-center justify-between rounded-full border border-[#e2e2e7] px-5 text-sm font-medium text-[#191c1f] transition-colors hover:bg-[#f4f4f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
+            className="mt-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-full border border-[#e2e2e7] px-6 py-2 text-left text-sm font-medium text-[#191c1f] transition-colors hover:bg-[#f4f4f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
           >
-            <span className="flex items-center gap-2">
-              <Building2 aria-hidden="true" className="h-4 w-4" />
-              Use your work email instead
-            </span>
-            <span className="text-xs font-semibold text-[#505a63]">200 credits</span>
+            <span>Sign up with work email to get 200 credits</span>
+            <Building2 aria-hidden="true" className="h-4 w-4 shrink-0" />
           </button>
         )}
       </form>
