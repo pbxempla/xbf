@@ -26,6 +26,30 @@ placeholders with your database credentials and host. Do not use the
 SQLAlchemy-specific `postgresql+psycopg2://` scheme; restart the dev server
 after changing environment variables.
 
+## Upload file security checks
+
+The upload page performs file-format and suspicious-content checks locally in
+the browser before continuing. During this inspection, file contents are not
+sent to FastAPI, S3, or third-party scanning services. These checks are not an
+antivirus scan and cannot guarantee that a file is malware-free.
+
+Configure `NEXT_PUBLIC_ALLOWED_FILE_EXTENSIONS` (default `.csv,.xls,.xlsx`)
+and `NEXT_PUBLIC_MAX_FILE_SIZE_MB` (default `100`) in the frontend `.env`.
+These `NEXT_PUBLIC_*` values are exposed to browser users and embedded in the
+client build; they are public configuration and must never contain secrets.
+Only CSV, legacy XLS, and XLSX are implemented formats; unsupported formats in
+the extension list are ignored. Restart the Next.js server after changing the
+values.
+
+For local verification, run `npm run test:upload-security`. Sign in and try
+valid CSV/XLS/XLSX samples, an uppercase extension, malformed CSV, a wrong
+extension/signature pair, and a harmless synthetic archive containing macro or
+external-relationship metadata. In DevTools Network, select, replace, and
+remove files and confirm that no request contains a file or file contents.
+The existing profile/session request may still occur when opening the page.
+Warnings require explicit acknowledgement before continuing; blocked files
+must remain unable to continue.
+
 ## Deploying with environment variables
 
 Configure these values in the frontend hosting environment:

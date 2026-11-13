@@ -11,18 +11,18 @@ interface DataPreviewTableProps {
 
 export function DataPreviewTable({ data, isLoading }: DataPreviewTableProps) {
   return (
-    <section className="flex min-h-[220px] w-full flex-1 flex-col">
+    <section className="flex min-h-[220px] w-full flex-1 flex-col lg:min-h-0">
       <div className="mb-3 flex shrink-0 items-center justify-between gap-3">
         <h3 className="text-sm font-semibold text-[#191c1f]">Data preview</h3>
         <span className="rounded-full bg-[#f4f4f4] px-3 py-1 text-xs text-[#5c5e60]">
-          First 5 rows
+          First 10 rows
         </span>
       </div>
 
       {data && data.headers.length > 0 ? (
-        <div className="flex min-h-[200px] flex-1 overflow-hidden rounded-xl border border-[#e2e2e7] bg-white">
+        <div className="flex min-h-[200px] flex-1 overflow-hidden rounded-xl border border-[#e2e2e7] bg-white lg:min-h-0">
           <div className="w-full overflow-auto">
-            <table className="w-full border-collapse text-left text-xs">
+            <table className="w-full min-w-max border-collapse text-left text-xs">
               <thead className="sticky top-0 z-10 bg-[#f4f4f4]">
                 <tr className="border-b border-[#e2e2e7]">
                   {data.headers.map((header, index) => (
@@ -61,13 +61,13 @@ export function DataPreviewTable({ data, isLoading }: DataPreviewTableProps) {
       ) : isLoading ? (
         <div
           role="status"
-          className="flex min-h-[200px] flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-[#e2e2e7] bg-[#f4f4f4] text-[#505a63]"
+          className="flex min-h-[200px] flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-[#e2e2e7] bg-[#f4f4f4] text-[#505a63] lg:min-h-0"
         >
           <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#494fdf] border-t-transparent" />
           <span className="text-sm">Preparing your preview…</span>
         </div>
       ) : (
-        <div className="flex min-h-[200px] flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[#c9c9cd] bg-[#f4f4f4] px-5 text-center text-[#5c5e60]">
+        <div className="flex min-h-[200px] flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-[#c9c9cd] bg-[#f4f4f4] px-5 text-center text-[#5c5e60] lg:min-h-0">
           <TableIcon aria-hidden="true" className="h-6 w-6" />
           <p className="max-w-xs text-sm leading-5">
             Your first rows will appear here once a file is selected.

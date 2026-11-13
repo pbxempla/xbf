@@ -10,6 +10,7 @@
     "build": "next build",
     "start": "next start",
     "smtp:check": "node scripts/check-smtp.mjs",
+    "test:upload-security": "node --test tests/upload-security.test.cjs",
     "lint": "eslint"
   },
   "dependencies": {

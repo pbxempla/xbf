@@ -4,7 +4,7 @@ import React from "react";
 
 export function UploadTitleSection() {
   return (
-    <div className="flex shrink-0 flex-col gap-6 pb-7 sm:flex-row sm:items-end sm:justify-between">
+    <div className="flex shrink-0 flex-col gap-6 pb-7 sm:flex-row sm:items-end sm:justify-between lg:pb-5">
       <div>
         <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#5c5e60]">
           Data workspace

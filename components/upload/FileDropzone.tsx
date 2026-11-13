@@ -2,6 +2,7 @@
 
 import React, { useRef, useState } from "react";
 import { FolderOpen, UploadCloud } from "lucide-react";
+import { UPLOAD_SECURITY_CONFIG } from "@/lib/upload/security-config";
 
 interface FileDropzoneProps {
   onFileSelected: (file: File) => void;
@@ -11,6 +12,9 @@ interface FileDropzoneProps {
 export function FileDropzone({ onFileSelected, disabled }: FileDropzoneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
+  const acceptedExtensions = UPLOAD_SECURITY_CONFIG.allowedExtensions
+    .map((extension) => `.${extension}`)
+    .join(",");
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -53,7 +57,7 @@ export function FileDropzone({ onFileSelected, disabled }: FileDropzoneProps) {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       onClick={triggerBrowse}
-      className={`flex min-h-[340px] flex-1 cursor-pointer flex-col items-center justify-center rounded-[20px] border border-dashed px-5 py-10 text-center transition-colors sm:min-h-[380px] lg:min-h-[520px] ${
+      className={`flex min-h-[340px] flex-1 cursor-pointer flex-col items-center justify-center rounded-[20px] border border-dashed px-5 py-10 text-center transition-colors sm:min-h-[380px] lg:min-h-0 lg:py-6 ${
         isDragOver
           ? "border-[#494fdf] bg-[#f4f4f4] ring-2 ring-[#494fdf]/15"
           : "border-[#c9c9cd] bg-white hover:border-[#191c1f] hover:bg-[#f4f4f4]"
@@ -62,7 +66,7 @@ export function FileDropzone({ onFileSelected, disabled }: FileDropzoneProps) {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".csv,.xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+        accept={acceptedExtensions}
         onChange={handleFileInputChange}
         className="hidden"
         disabled={disabled}
@@ -91,15 +95,17 @@ export function FileDropzone({ onFileSelected, disabled }: FileDropzoneProps) {
       </button>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-xs">
-        {["CSV", "XLS", "XLSX"].map((format) => (
+        {UPLOAD_SECURITY_CONFIG.allowedExtensions.map((extension) => (
           <span
-            key={format}
+            key={extension}
             className="rounded-full border border-[#e2e2e7] px-3 py-1.5 font-medium text-[#3a3d40]"
           >
-            {format}
+            {extension.toUpperCase()}
           </span>
         ))}
-        <span className="px-1 text-[#8d969e]">Up to 100 MB</span>
+        <span className="px-1 text-[#8d969e]">
+          Up to {UPLOAD_SECURITY_CONFIG.maxFileSizeMb} MB
+        </span>
       </div>
     </div>
   );

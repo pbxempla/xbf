@@ -1,16 +1,14 @@
 "use client";
 
 import React from "react";
-import { FileSpreadsheet, FileText, Trash2, UploadCloud } from "lucide-react";
+import { FileSpreadsheet, FileText, UploadCloud } from "lucide-react";
 import { ParsedFileData } from "@/types/upload";
 
 interface UploadedFileCardProps {
   data: ParsedFileData | null;
-  onRemove: () => void;
-  disabled?: boolean;
 }
 
-export function UploadedFileCard({ data, onRemove, disabled }: UploadedFileCardProps) {
+export function UploadedFileCard({ data }: UploadedFileCardProps) {
   const isExcel = data && (data.fileType === "xls" || data.fileType === "xlsx");
 
   return (
@@ -18,7 +16,7 @@ export function UploadedFileCard({ data, onRemove, disabled }: UploadedFileCardP
       <h3 className="mb-2 text-sm font-semibold text-[#191c1f]">Uploaded file</h3>
 
       {data ? (
-        <div className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#e2e2e7] bg-[#f4f4f4] p-3 sm:p-4">
+        <div className="flex w-full items-center gap-3 rounded-xl border border-[#e2e2e7] bg-[#f4f4f4] p-3 sm:p-4">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-[#e2e2e7] bg-white text-[#191c1f]">
               {isExcel ? (
@@ -35,15 +33,6 @@ export function UploadedFileCard({ data, onRemove, disabled }: UploadedFileCardP
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onRemove}
-            disabled={disabled}
-            aria-label="Remove uploaded file"
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-[#5c5e60] transition-colors hover:bg-white hover:text-[#e23b4a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Trash2 aria-hidden="true" className="h-4 w-4" />
-          </button>
         </div>
       ) : (
         <div className="flex w-full items-center gap-3 rounded-xl border border-[#e2e2e7] bg-[#f4f4f4] p-4 text-[#5c5e60]">
