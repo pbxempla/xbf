@@ -27,14 +27,40 @@ Configure these values in the frontend hosting environment:
   variable, not in `.env`).
 - `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL`: the deployed frontend URL,
   including `https://`.
-- `NEXT_PUBLIC_API_URL`: the deployed backend API base URL, including
-  `/api/v1`.
+- `BACKEND_API_URL`: the private FastAPI base URL, including `/api/v1`.
+- `AUTH_BRIDGE_SECRET`: a randomly generated secret of at least 32 characters;
+  configure the same value in the backend, and never expose it with a
+  `NEXT_PUBLIC_` prefix.
 - `BETTER_AUTH_SECRET` and `DATABASE_URL`: the Better Auth secret and database
   connection string.
 
-Set `NEXT_PUBLIC_APP_URL` and `NEXT_PUBLIC_API_URL` before running
+Set `NEXT_PUBLIC_APP_URL` before running
 `npm run build`; Next.js embeds `NEXT_PUBLIC_*` values into the client bundle
 at build time. `npm start` serves the build on the configured `PORT`.
+
+## Authentication and profile integration
+
+Better Auth is the sole authentication authority. Its PostgreSQL `user` and
+`session` records are not copied into a second authentication system. After
+Better Auth validates the HttpOnly session cookie, the Next.js
+`/api/backend/*` server route issues a 60-second HS256 identity assertion to
+FastAPI. Browser code never receives that assertion or a Better Auth session
+token. The backend verifies the signature, issuer, audience, expiry, and
+verified-email claim on every request.
+
+Use the same PostgreSQL database for Better Auth and FastAPI, and apply the
+Better Auth schema before testing the flow. Apply the backend-owned tables and
+profile-link migration from `xempla-brief-backend` with `alembic upgrade head`.
+The backend profile is linked by the Better Auth user ID; email classification,
+the current credit balance, and credit transactions remain backend-owned. New
+Better Auth identities receive a server-only credit eligibility marker, while
+legacy balances are imported once by FastAPI to avoid duplicate signup
+credits. Profile and credit data in the upload header come from FastAPI, not
+browser-side estimates.
+
+The bridge secret must be identical in both server environments. The API
+should be reachable from the Next.js server at `BACKEND_API_URL`; browser
+requests go to the same-origin Next.js proxy, not directly to FastAPI.
 
 ## Check Google Workspace SMTP
 

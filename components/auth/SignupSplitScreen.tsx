@@ -5,9 +5,9 @@ import { SignupForm } from "./SignupForm";
 import { OtpVerification } from "./OtpVerification";
 import { AuthIllustration } from "./AuthIllustration";
 import { WorkspacePreview } from "./WorkspacePreview";
-import { AuthSessionResponse, OtpRequestResponse, UserProfile } from "@/types/auth";
+import { AuthSessionResponse, OtpRequestResponse } from "@/types/auth";
 import { authClient } from "@/lib/auth-client";
-import { clearAuthToken } from "@/lib/api";
+import { getCurrentUser } from "@/lib/api";
 
 type ScreenState = "form" | "otp" | "authenticated";
 
@@ -15,58 +15,37 @@ export function SignupSplitScreen() {
   const [screenState, setScreenState] = useState<ScreenState>("form");
   const [otpData, setOtpData] = useState<OtpRequestResponse | null>(null);
   const [authSession, setAuthSession] = useState<AuthSessionResponse | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
-  // Check for existing Better Auth session on mount
   useEffect(() => {
-    authClient
-      .getSession()
-      .then(({ data }) => {
-        if (data?.session && data?.user) {
-          const userRaw = data.user as {
-            id: string;
-            email: string;
-            emailType?: string | null;
-            creditBalance?: number;
-            isVerified?: boolean;
-            emailVerified?: boolean;
-            name?: string | null;
-            createdAt?: Date | string | number;
-          };
-          const emailType: "work" | "personal" =
-            userRaw.emailType === "work" ? "work" : "personal";
+    let active = true;
+    const loadSession = async () => {
+      try {
+        const { data, error } = await authClient.getSession();
+        if (error) throw new Error(error.message || "Unable to validate your session.");
+        if (!data?.session || !data.user) return;
 
-          const profile: UserProfile = {
-            id: userRaw.id,
-            email: userRaw.email,
-            normalized_email: userRaw.email.toLowerCase(),
-            email_type: emailType,
-            emailType: emailType,
-            credit_balance: typeof userRaw.creditBalance === "number" ? userRaw.creditBalance : 0,
-            creditBalance: typeof userRaw.creditBalance === "number" ? userRaw.creditBalance : 0,
-            is_verified: Boolean(userRaw.isVerified ?? userRaw.emailVerified),
-            isVerified: Boolean(userRaw.isVerified ?? userRaw.emailVerified),
-            auth_provider: "email_otp",
-            full_name: userRaw.name || null,
-            created_at: new Date(
-              userRaw.createdAt instanceof Date
-                ? userRaw.createdAt.getTime()
-                : userRaw.createdAt || Date.now(),
-            ).toISOString(),
-          };
-
-          setAuthSession({
-            access_token: data.session.token || "better-auth-session",
-            token_type: "bearer",
-            is_new_user: false,
-            credits_awarded: 0,
-            user: profile,
-          });
-          setScreenState("authenticated");
+        const user = await getCurrentUser();
+        if (!active) return;
+        setAuthSession({
+          is_new_user: user.is_new_user ?? false,
+          credits_awarded: user.credits_awarded ?? 0,
+          user,
+        });
+        setScreenState("authenticated");
+      } catch (error) {
+        if (active) {
+          setAuthError(
+            error instanceof Error ? error.message : "Unable to load your account profile.",
+          );
         }
-      })
-      .catch(() => {
-        // No active session
-      });
+      }
+    };
+
+    void loadSession();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleOtpRequested = (data: OtpRequestResponse) => {
@@ -75,6 +54,7 @@ export function SignupSplitScreen() {
   };
 
   const handleOtpSuccess = (session: AuthSessionResponse) => {
+    setAuthError(null);
     setAuthSession(session);
     setScreenState("authenticated");
   };
@@ -85,20 +65,26 @@ export function SignupSplitScreen() {
 
   const handleLogout = async () => {
     try {
-      await authClient.signOut();
-    } catch {
-      // Ignore
+      const { error } = await authClient.signOut();
+      if (error) throw new Error(error.message || "Unable to sign out.");
+      setAuthError(null);
+      setAuthSession(null);
+      setOtpData(null);
+      setScreenState("form");
+    } catch (error) {
+      setAuthError(error instanceof Error ? error.message : "Unable to sign out.");
     }
-    clearAuthToken();
-    setAuthSession(null);
-    setOtpData(null);
-    setScreenState("form");
   };
 
   return (
     <div className="flex h-full max-h-full w-full overflow-hidden bg-white lg:flex-row">
       <section className="z-10 flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-white px-6 py-4 sm:px-12 lg:w-[60%] lg:px-14 lg:py-2 xl:px-20">
         <div className="w-full max-w-[420px]">
+          {authError && (
+            <div role="alert" className="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+              {authError}
+            </div>
+          )}
           {screenState === "form" && (
             <SignupForm onOtpRequested={handleOtpRequested} />
           )}

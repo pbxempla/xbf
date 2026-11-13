@@ -50,7 +50,7 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
     setOauthNotice(null);
 
     try {
-      const { error } = await authClient.emailOTP.sendVerificationOTP({
+      const { error } = await authClient.emailOtp.sendVerificationOtp({
         email: email.trim(),
         type: "sign-in",
       });

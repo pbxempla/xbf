@@ -17,6 +17,8 @@ import { parseDatasetFile } from "@/lib/upload/file-parser";
 interface UploadScreenProps {
   userEmail?: string;
   userName?: string;
+  emailType?: "personal" | "work";
+  creditBalance?: number;
   onLogout?: () => void;
 }
 
@@ -27,7 +29,13 @@ const DEFAULT_VALIDATION_ITEMS: ValidationItem[] = [
   { id: "preview", label: "Data preview available", passed: false },
 ];
 
-export function UploadScreen({ userEmail, userName, onLogout }: UploadScreenProps) {
+export function UploadScreen({
+  userEmail,
+  userName,
+  emailType,
+  creditBalance,
+  onLogout,
+}: UploadScreenProps) {
   const router = useRouter();
 
   const [parsedData, setParsedData] = useState<ParsedFileData | null>(null);
@@ -115,6 +123,8 @@ export function UploadScreen({ userEmail, userName, onLogout }: UploadScreenProp
       <UploadHeader
         userEmail={userEmail}
         userName={userName}
+        emailType={emailType}
+        creditBalance={creditBalance}
         onLogout={onLogout}
       />
 

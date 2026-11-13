@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { ArrowLeft, ArrowRight, Loader2, RefreshCw } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { setAuthToken } from "@/lib/api";
+import { getCurrentUser } from "@/lib/api";
 import { AuthSessionResponse, UserProfile } from "@/types/auth";
 import { XemplaLogo } from "@/components/icons/Icons";
 
@@ -114,8 +114,7 @@ export function OtpVerification({
     setInfoMessage(null);
 
     try {
-      // Submitting the 6-digit code calls authClient.emailOTP.verifyEmail({ email, otp })
-      const result = await authClient.emailOTP.verifyEmail({
+      const result = await authClient.signIn.emailOtp({
         email: email.trim(),
         otp,
       });
@@ -124,42 +123,13 @@ export function OtpVerification({
         throw new Error(result.error.message || "Invalid or expired verification code.");
       }
 
-      const resData = result.data as Record<string, unknown> | undefined;
-      const userRaw = (resData?.user || resData) as Record<string, unknown> | undefined;
-      const emailType: "work" | "personal" =
-        userRaw?.emailType === "work" || eligibleCredits === 200 ? "work" : "personal";
-      const creditBalance =
-        typeof userRaw?.creditBalance === "number" ? userRaw.creditBalance : eligibleCredits;
-
-      const userProfile: UserProfile = {
-        id: (userRaw?.id as string) || "user-" + Date.now(),
-        email: (userRaw?.email as string) || email.trim(),
-        normalized_email: ((userRaw?.email as string) || email.trim()).toLowerCase(),
-        email_type: emailType,
-        emailType: emailType,
-        credit_balance: creditBalance,
-        creditBalance: creditBalance,
-        is_verified: true,
-        isVerified: true,
-        auth_provider: "email_otp",
-        full_name: (userRaw?.name as string) || null,
-        created_at:
-          typeof userRaw?.createdAt === "string" || typeof userRaw?.createdAt === "number"
-            ? new Date(userRaw.createdAt).toISOString()
-            : new Date().toISOString(),
-      };
+      const userProfile: UserProfile = await getCurrentUser();
 
       const session: AuthSessionResponse = {
-        access_token: (resData?.token as string) || "better-auth-session",
-        token_type: "bearer",
-        is_new_user: true,
-        credits_awarded: creditBalance,
+        is_new_user: userProfile.is_new_user ?? false,
+        credits_awarded: userProfile.credits_awarded ?? 0,
         user: userProfile,
       };
-
-      if (session.access_token) {
-        setAuthToken(session.access_token);
-      }
 
       onSuccess(session);
     } catch (err: unknown) {
@@ -178,7 +148,7 @@ export function OtpVerification({
     setInfoMessage(null);
 
     try {
-      const { error } = await authClient.emailOTP.sendVerificationOTP({
+      const { error } = await authClient.emailOtp.sendVerificationOtp({
         email: email.trim(),
         type: "sign-in",
       });
@@ -220,7 +190,7 @@ export function OtpVerification({
 
       <p className="mt-3 text-sm leading-6 text-[#505a63]">
         We sent a 6-digit code to <strong className="font-semibold text-[#191c1f]">{email}</strong>.
-        Enter it below to continue and claim{" "}
+        Enter it below to continue. New accounts receive{" "}
         <span className="font-semibold text-[#191c1f]">{eligibleCredits} credits</span>.
       </p>
 

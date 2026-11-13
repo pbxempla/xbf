@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Database, Layers, CheckCircle2 } from "lucide-react";
 import { UploadHeader } from "@/components/upload/UploadHeader";
 import { authClient } from "@/lib/auth-client";
+import { ApiError, getCurrentUser } from "@/lib/api";
+import { UserProfile } from "@/types/auth";
 
 interface CachedDatasetInfo {
   fileName: string;
@@ -20,6 +22,8 @@ interface CachedDatasetInfo {
 export default function MappingPage() {
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const [dataset] = useState<CachedDatasetInfo | null>(() => {
     if (typeof window !== "undefined") {
       try {
@@ -40,7 +44,59 @@ export default function MappingPage() {
     }
   }, [isPending, session, router]);
 
+  useEffect(() => {
+    if (isPending || !session) return;
+
+    let active = true;
+    getCurrentUser()
+      .then(setProfile)
+      .catch((error: unknown) => {
+        if (!active) return;
+        if (error instanceof ApiError && error.status === 401) {
+          router.replace("/");
+          return;
+        }
+        setProfileError(
+          error instanceof Error ? error.message : "Unable to load your account profile.",
+        );
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isPending, session, router]);
+
+  const handleLogout = async () => {
+    try {
+      const { error } = await authClient.signOut();
+      if (error) throw new Error(error.message || "Unable to sign out.");
+      router.replace("/");
+    } catch (error) {
+      setProfileError(error instanceof Error ? error.message : "Unable to sign out.");
+    }
+  };
+
   if (isPending) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center bg-[#F5F6FE]">
+        <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (!session) {
+    return null;
+  }
+
+  if (profileError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F5F6FE] px-6 text-center">
+        <p role="alert" className="text-sm text-red-700">{profileError}</p>
+      </div>
+    );
+  }
+
+  if (!profile) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center bg-[#F5F6FE]">
         <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
@@ -51,8 +107,11 @@ export default function MappingPage() {
   return (
     <div className="min-h-screen w-full bg-linear-to-b from-[#F5F6FE] via-[#EDF0FE] to-[#F5F7FF] flex flex-col">
       <UploadHeader
-        userEmail={session?.user?.email}
-        userName={session?.user?.name || undefined}
+        userEmail={profile.email}
+        userName={profile.full_name || undefined}
+        emailType={profile.email_type}
+        creditBalance={profile.credit_balance}
+        onLogout={handleLogout}
       />
 
       <main className="w-full px-6 sm:px-8 lg:px-12 py-8 flex flex-col flex-1">

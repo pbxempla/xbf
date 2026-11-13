@@ -7,10 +7,18 @@ import { XemplaLogo } from "@/components/icons/Icons";
 interface UploadHeaderProps {
   userEmail?: string;
   userName?: string;
+  emailType?: "personal" | "work";
+  creditBalance?: number;
   onLogout?: () => void;
 }
 
-export function UploadHeader({ userEmail, userName }: UploadHeaderProps) {
+export function UploadHeader({
+  userEmail,
+  userName,
+  emailType,
+  creditBalance,
+  onLogout,
+}: UploadHeaderProps) {
   const getInitials = (): string => {
     if (userName && userName.trim()) {
       const parts = userName.trim().split(/\s+/);
@@ -41,6 +49,17 @@ export function UploadHeader({ userEmail, userName }: UploadHeaderProps) {
 
       {/* Right: Notification Bell & User Initials Avatar */}
       <div className="flex items-center gap-3.5">
+        <div className="max-w-32 text-right sm:max-w-56">
+          <p className="truncate text-[10px] font-semibold text-[#101744] sm:text-xs">
+            {userEmail || userName || "Signed in"}
+          </p>
+          <p className="truncate text-[10px] text-slate-600 sm:text-[11px]">
+            {emailType ? `${emailType === "work" ? "Work" : "Personal"} account` : ""}
+            {typeof creditBalance === "number"
+              ? `${emailType ? " · " : ""}${creditBalance} credits`
+              : ""}
+          </p>
+        </div>
         <button
           type="button"
           aria-label="Notifications"
@@ -50,12 +69,15 @@ export function UploadHeader({ userEmail, userName }: UploadHeaderProps) {
           <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#3024D8] ring-2 ring-white" />
         </button>
 
-        <div
+        <button
+          type="button"
+          onClick={onLogout}
+          aria-label="Sign out"
           title={userEmail || "Signed in"}
-          className="w-8.5 h-8.5 rounded-full bg-[#101744] text-white flex items-center justify-center font-bold text-xs tracking-wide shadow-2xs select-none cursor-default"
+          className="w-8.5 h-8.5 rounded-full bg-[#101744] text-white flex items-center justify-center font-bold text-xs tracking-wide shadow-2xs select-none cursor-pointer"
         >
           {initials}
-        </div>
+        </button>
       </div>
     </header>
   );

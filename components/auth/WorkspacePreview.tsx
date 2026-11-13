@@ -5,8 +5,6 @@ import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 import { LogOut, CheckCircle2, Coins, Sparkles, Building, User, ArrowRight } from "lucide-react";
 import { AuthSessionResponse } from "@/types/auth";
-import { authClient } from "@/lib/auth-client";
-import { clearAuthToken } from "@/lib/api";
 import { XemplaLogo } from "@/components/icons/Icons";
 
 interface WorkspacePreviewProps {
@@ -30,23 +28,8 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
     }
   }, [is_new_user]);
 
-  const handleLogout = async () => {
-    try {
-      await authClient.signOut();
-    } catch {
-      // Ignore
-    }
-    clearAuthToken();
-    onLogout();
-  };
-
-  const isWork = user.email_type === "work" || user.emailType === "work";
-  const creditBalance =
-    typeof user.credit_balance === "number"
-      ? user.credit_balance
-      : typeof user.creditBalance === "number"
-      ? user.creditBalance
-      : 0;
+  const isWork = user.email_type === "work";
+  const creditBalance = user.credit_balance;
 
   return (
     <div className="auth-success-content w-full flex flex-col animate-fade-in">
@@ -65,7 +48,7 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
           </h3>
           <p className="mt-0.5 text-xs text-[#505a63]">
             {is_new_user
-              ? `You have been awarded ${credits_awarded} initial credits for your ${user.email_type || user.emailType} account.`
+            ? `You have been awarded ${credits_awarded} initial credits for your ${user.email_type} account.`
               : `Signed in as ${user.email}.`}
           </p>
         </div>
@@ -128,7 +111,7 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
           <div className="flex justify-between items-center">
             <span>Account Type</span>
             <span className="font-semibold capitalize text-[#191c1f]">
-              {user.email_type || user.emailType} Email
+              {user.email_type} Email
             </span>
           </div>
           <div className="flex justify-between items-center">
@@ -138,7 +121,7 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
           <div className="flex justify-between items-center">
             <span>Initial Reward</span>
             <span className="font-semibold text-[#006400]">
-              +{isWork ? "200" : "150"} Credits Granted
+              {is_new_user ? `+${credits_awarded} Credits Granted` : "No new credits"}
             </span>
           </div>
         </div>
@@ -156,7 +139,7 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
         {/* Sign Out Action Button */}
         <button
           type="button"
-          onClick={handleLogout}
+          onClick={onLogout}
           className="flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#e2e2e7] text-sm font-semibold text-[#191c1f] transition-colors hover:bg-[#f4f4f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
         >
           <LogOut className="h-4 w-4 text-[#505a63]" />
