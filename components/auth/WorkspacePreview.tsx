@@ -3,15 +3,14 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
-import { LogOut, CheckCircle2, Coins, Sparkles, Building, User, ArrowRight } from "lucide-react";
+import { CheckCircle2, Coins, Sparkles, Building, User, ArrowRight } from "lucide-react";
 import { AuthSessionResponse } from "@/types/auth";
 
 interface WorkspacePreviewProps {
   session: AuthSessionResponse;
-  onLogout: () => void;
 }
 
-export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
+export function WorkspacePreview({ session }: WorkspacePreviewProps) {
   const router = useRouter();
   const { user, is_new_user, credits_awarded } = session;
 
@@ -107,18 +106,17 @@ export function WorkspacePreview({ session, onLogout }: WorkspacePreviewProps) {
           onClick={() => router.push("/upload")}
           className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black text-sm font-semibold text-white transition-colors hover:bg-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] sm:h-14 sm:text-base"
         >
-          <span>Continue to Data Upload</span>
+          <span>Continue to Upload</span>
           <ArrowRight className="w-4 h-4" />
         </button>
 
-        {/* Sign Out Action Button */}
         <button
           type="button"
-          onClick={onLogout}
+          onClick={() => router.push("/dashboard")}
           className="flex h-12 w-full items-center justify-center gap-2 rounded-full border border-[#e2e2e7] text-sm font-semibold text-[#191c1f] transition-colors hover:bg-[#f4f4f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] sm:h-14 sm:text-base"
         >
-          <LogOut className="h-4 w-4 text-[#505a63]" />
-          <span>Sign out of Xempla</span>
+          <span>Continue to Dashboard</span>
+          <ArrowRight aria-hidden="true" className="h-4 w-4" />
         </button>
       </div>
     </div>

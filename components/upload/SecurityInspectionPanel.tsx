@@ -96,9 +96,6 @@ export function SecurityInspectionPanel({
       >
         {summary}
       </p>
-      <p className="mt-2 text-[11px] leading-4 text-[#737b82]">
-        Browser-side checks validate file format and detect selected suspicious content; they are not an antivirus scan and cannot guarantee a file is malware-free.
-      </p>
     </section>
   );
 }

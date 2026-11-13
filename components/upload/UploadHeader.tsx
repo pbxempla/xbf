@@ -10,6 +10,7 @@ interface UploadHeaderProps {
   emailType?: "personal" | "work";
   creditBalance?: number;
   onLogout?: () => void;
+  sectionLabel?: string;
 }
 
 export function UploadHeader({
@@ -18,6 +19,7 @@ export function UploadHeader({
   emailType,
   creditBalance,
   onLogout,
+  sectionLabel = "Data workspace",
 }: UploadHeaderProps) {
   const displayName = userName?.trim() || userEmail || "Signed in";
   const initials = displayName
@@ -33,7 +35,7 @@ export function UploadHeader({
       <div className="flex items-center gap-8">
         <XemplaLogo onDark />
         <span className="hidden border-l border-white/15 pl-8 text-sm text-white/60 sm:block">
-          Data workspace
+          {sectionLabel}
         </span>
       </div>
 

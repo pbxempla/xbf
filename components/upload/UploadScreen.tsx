@@ -358,14 +358,18 @@ export function UploadScreen({
                   </button>
                 </div>
               </div>
-              <DataPreviewTable data={parsedData} isLoading={isValidating} />
+              <DataPreviewTable
+                data={parsedData}
+                isLoading={isValidating}
+                showQuickOverview={hasSelectedFile}
+              />
             </section>
           )}
         </div>
 
         <div className="mt-6 flex w-full flex-col-reverse items-stretch justify-between gap-4 sm:flex-row sm:items-center lg:mt-4">
           <p className="text-xs leading-5 text-[#5c5e60]">
-            Next step: map your columns to Xempla fields.
+            Next step: Map your columns to Xempla fields.
           </p>
           <button
             type="button"

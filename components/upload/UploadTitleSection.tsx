@@ -6,9 +6,6 @@ export function UploadTitleSection() {
   return (
     <div className="flex shrink-0 flex-col gap-6 pb-7 sm:flex-row sm:items-end sm:justify-between lg:pb-5">
       <div>
-        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#5c5e60]">
-          Data workspace
-        </p>
         <h1 className="text-[36px] font-medium leading-[1.05] tracking-[-0.04em] text-[#191c1f] sm:text-[40px]">
           Upload your data
         </h1>
