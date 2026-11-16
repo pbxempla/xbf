@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Check, X, Loader2 } from "lucide-react";
+import { Check, Circle, Loader2, X } from "lucide-react";
 import { ValidationItem } from "@/types/upload";
 
 interface FileValidationCardProps {
@@ -18,55 +18,41 @@ export function FileValidationCard({
   error,
 }: FileValidationCardProps) {
   return (
-    <div className="shrink-0 w-full flex flex-col">
-      <h3 className="text-xs font-bold text-[#101744] mb-1.5">
-        Validation
-      </h3>
+    <section className="w-full shrink-0">
+      <h3 className="mb-3 text-sm font-semibold text-[#191c1f]">Readiness checks</h3>
 
-      <div className="w-full bg-[#F4F1FF] rounded-xl p-3 sm:p-3.5 flex flex-col gap-2 border border-[#EBE6FF]">
-        {items.map((item) => {
-          return (
-            <div key={item.id} className="flex items-center gap-2.5">
-              {/* Checkmark Circle Icon */}
-              {item.passed ? (
-                <div className="w-4 h-4 rounded-full bg-[#16B85A] text-white flex items-center justify-center shrink-0 shadow-2xs">
-                  <Check className="w-2.5 h-2.5 stroke-3" />
-                </div>
-              ) : hasFile && isValidating ? (
-                <div className="w-4 h-4 rounded-full flex items-center justify-center shrink-0 text-[#3024D8]">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                </div>
-              ) : hasFile && item.message ? (
-                <div className="w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center shrink-0">
-                  <X className="w-2.5 h-2.5 stroke-3" />
-                </div>
-              ) : (
-                <div className="w-4 h-4 rounded-full border border-[#DDD7FE] bg-white/70 flex items-center justify-center shrink-0" />
-              )}
-
-              {/* Validation Label */}
-              <span
-                className={`text-xs font-medium ${
-                  item.passed
-                    ? "text-[#101744]"
-                    : item.message
-                    ? "text-red-600"
-                    : "text-[#64749A]"
-                }`}
-              >
-                {item.label}
+      <ul className="space-y-2.5">
+        {items.map((item) => (
+          <li key={item.id} className="flex items-center gap-3">
+            {item.passed ? (
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#00a87e]/10 text-[#006400]">
+                <Check aria-hidden="true" className="h-3 w-3 stroke-[2.5]" />
               </span>
-            </div>
-          );
-        })}
+            ) : hasFile && isValidating ? (
+              <Loader2 aria-hidden="true" className="h-5 w-5 shrink-0 animate-spin text-[#494fdf]" />
+            ) : hasFile && item.message ? (
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e23b4a]/10 text-[#e23b4a]">
+                <X aria-hidden="true" className="h-3 w-3 stroke-[2.5]" />
+              </span>
+            ) : (
+              <Circle aria-hidden="true" className="h-5 w-5 shrink-0 text-[#c9c9cd]" />
+            )}
 
-        {/* Global Error banner if parsing failed */}
-        {error && (
-          <div className="mt-1 text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2">
-            {error}
-          </div>
-        )}
-      </div>
-    </div>
+            <span className={`text-sm ${item.message ? "text-[#8b0000]" : "text-[#3a3d40]"}`}>
+              {item.label}
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      {error && (
+        <div
+          role="alert"
+          className="mt-4 rounded-xl border border-[#e23b4a]/20 bg-[#e23b4a]/5 p-3 text-sm leading-5 text-[#8b0000]"
+        >
+          {error}
+        </div>
+      )}
+    </section>
   );
 }

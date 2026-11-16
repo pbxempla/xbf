@@ -4,7 +4,7 @@ import React, { useEffect, useState, Suspense } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import { Loader2, AlertCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import { setAuthToken } from "@/lib/api";
+import { authClient } from "@/lib/auth-client";
 import { XemplaLogo } from "@/components/icons/Icons";
 
 function OAuthCallbackContent() {
@@ -44,30 +44,15 @@ function OAuthCallbackContent() {
       }
 
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api/v1";
-        const res = await fetch(`${apiUrl}/auth/oauth/${provider}/callback`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({ code, state }),
-        });
-
-        const data = await res.json().catch(() => null);
-
-        if (!res.ok) {
-          throw new Error(data?.detail || "OAuth authentication failed.");
+        const { data, error } = await authClient.getSession();
+        if (error || !data?.session) {
+          throw new Error(
+            `${provider} OAuth is not configured. Please sign in with email OTP.`,
+          );
         }
-
-        if (data.access_token) {
-          setAuthToken(data.access_token);
-          if (isMounted) {
-            setStatus("success");
-            router.push("/");
-          }
-        } else {
-          throw new Error("No session token received.");
+        if (isMounted) {
+          setStatus("success");
+          router.replace("/upload");
         }
       } catch (err: unknown) {
         if (isMounted) {

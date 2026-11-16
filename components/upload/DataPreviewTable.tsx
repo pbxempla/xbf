@@ -1,74 +1,153 @@
 "use client";
 
 import React from "react";
-import { Table as TableIcon } from "lucide-react";
-import { ParsedFileData } from "@/types/upload";
+import { BackendUploadPreview, ParsedFileData } from "@/types/upload";
 
 interface DataPreviewTableProps {
-  data: ParsedFileData | null;
+  data?: ParsedFileData | null;
+  backendPreview?: BackendUploadPreview | null;
   isLoading?: boolean;
+  showQuickOverview?: boolean;
 }
 
-export function DataPreviewTable({ data, isLoading }: DataPreviewTableProps) {
-  return (
-    <div className="flex-1 min-h-35 lg:min-h-0 flex flex-col w-full">
-      <h3 className="text-xs font-bold text-[#101744] mb-1.5 shrink-0">
-        Preview (First 5 Rows)
-      </h3>
+export function DataPreviewTable({
+  data,
+  backendPreview,
+  isLoading,
+  showQuickOverview = false,
+}: DataPreviewTableProps) {
+  const isBackend = Boolean(backendPreview && backendPreview.status === "ready");
 
-      {data && data.headers.length > 0 ? (
-        <div className="flex-1 min-h-0 w-full border border-[#E9E5FF] rounded-xl overflow-hidden bg-white shadow-2xs flex flex-col">
-          <div className="w-full flex-1 min-h-0 overflow-auto scrollbar-thin">
-            <table className="w-full text-left border-collapse text-[11px]">
-              <thead>
-                <tr className="bg-[#EEF1FF] border-b border-[#E3DEFF] sticky top-0 z-10">
-                  {data.headers.map((header, idx) => (
-                    <th
-                      key={idx}
-                      className="px-3 py-1.5 text-[#101744] font-semibold whitespace-nowrap select-none bg-[#EEF1FF]"
-                    >
-                      {header}
-                    </th>
-                  ))}
+  const headers: string[] = isBackend
+    ? backendPreview!.columns.map((c) => c.name)
+    : data?.headers ?? [];
+
+  const columns = isBackend ? backendPreview!.columns : null;
+
+  const rowCount = isBackend
+    ? backendPreview!.preview_rows.length
+    : data?.rows.length ?? 0;
+
+  const totalRowCount = isBackend
+    ? backendPreview!.total_rows
+    : data?.rowCount ?? 0;
+
+  const totalColCount = isBackend
+    ? backendPreview!.total_columns
+    : data?.columnCount ?? 0;
+
+  return (
+    <section className="flex min-h-[220px] w-full flex-1 flex-col gap-2 lg:min-h-0">
+      {showQuickOverview && (data || isBackend) && (
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#5c5e60]">
+          <div className="flex items-center gap-2">
+            <span
+              className={`inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium ${
+                isBackend
+                  ? "bg-[#e8e9ff] text-[#494fdf]"
+                  : "bg-[#f4f4f4] text-[#5c5e60]"
+              }`}
+            >
+              {isBackend ? "Backend preview (first 5 rows)" : "Local pre-upload preview"}
+            </span>
+            {isBackend && backendPreview?.sheet_name && (
+              <span className="text-[11px] text-[#5c5e60]">
+                Sheet: <strong className="text-[#191c1f]">{backendPreview.sheet_name}</strong>
+              </span>
+            )}
+          </div>
+          <span className="text-[11px]">
+            Total: <strong>{totalRowCount.toLocaleString()}</strong> rows •{" "}
+            <strong>{totalColCount}</strong> columns
+          </span>
+        </div>
+      )}
+
+      {(isBackend || (data && data.headers.length > 0)) && rowCount > 0 ? (
+        <div className="flex min-h-[200px] flex-1 overflow-hidden rounded-xl border border-[#e2e2e7] bg-white lg:min-h-0">
+          <div className="w-full overflow-auto">
+            <table className="w-full min-w-max border-collapse text-left text-xs">
+              <thead className="sticky top-0 z-10 bg-[#f4f4f4]">
+                <tr className="border-b border-[#e2e2e7]">
+                  {headers.map((header, index) => {
+                    const detectedType = columns ? columns[index]?.detected_type : null;
+                    return (
+                      <th
+                        key={index}
+                        className="whitespace-nowrap px-3 py-2.5 font-semibold text-[#191c1f]"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span>{header}</span>
+                          {detectedType && (
+                            <span
+                              title={`Inferred type: ${detectedType}`}
+                              className="inline-block rounded bg-white px-1.5 py-0.5 font-mono text-[10px] font-normal text-[#494fdf] border border-[#e2e2e7]"
+                            >
+                              {detectedType}
+                            </span>
+                          )}
+                        </div>
+                      </th>
+                    );
+                  })}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F4F1FF]">
-                {data.rows.map((row, rowIdx) => (
-                  <tr
-                    key={rowIdx}
-                    className="hover:bg-[#F9F8FF] transition-colors"
-                  >
-                    {data.headers.map((header, colIdx) => {
-                      const val = row[header];
-                      const displayVal =
-                        val !== null && val !== undefined ? String(val) : "";
-                      return (
-                        <td
-                          key={colIdx}
-                          className="px-3 py-1.5 text-[#101744] whitespace-nowrap max-w-xs truncate font-normal"
-                          title={displayVal}
-                        >
-                          {displayVal || <span className="text-slate-300 italic">null</span>}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
+              <tbody className="divide-y divide-[#e2e2e7]">
+                {isBackend
+                  ? backendPreview!.preview_rows.map((row, rowIndex) => (
+                      <tr key={rowIndex} className="hover:bg-[#f4f4f4]">
+                        {headers.map((_, colIndex) => {
+                          const value = row[colIndex];
+                          const displayValue =
+                            value !== null && value !== undefined ? String(value) : "";
+                          return (
+                            <td
+                              key={colIndex}
+                              title={displayValue}
+                              className="max-w-56 truncate whitespace-nowrap px-3 py-2.5 text-[#3a3d40]"
+                            >
+                              {displayValue || (
+                                <span className="italic text-[#8d969e]">null</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))
+                  : data!.rows.map((row, rowIndex) => (
+                      <tr key={rowIndex} className="hover:bg-[#f4f4f4]">
+                        {headers.map((header, columnIndex) => {
+                          const value = row[header];
+                          const displayValue =
+                            value !== null && value !== undefined ? String(value) : "";
+
+                          return (
+                            <td
+                              key={columnIndex}
+                              title={displayValue}
+                              className="max-w-56 truncate whitespace-nowrap px-3 py-2.5 text-[#3a3d40]"
+                            >
+                              {displayValue || (
+                                <span className="italic text-[#8d969e]">null</span>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
               </tbody>
             </table>
           </div>
         </div>
       ) : isLoading ? (
-        <div className="flex-1 min-h-30 w-full border border-[#E9E5FF] rounded-xl p-6 bg-white flex flex-col items-center justify-center text-[#64749A] gap-2 shadow-2xs">
-          <div className="w-5 h-5 border-2 border-[#3024D8] border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs">Parsing dataset preview...</span>
+        <div
+          role="status"
+          className="flex min-h-[200px] flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-[#e2e2e7] bg-[#f4f4f4] text-[#505a63] lg:min-h-0"
+        >
+          <span className="h-6 w-6 animate-spin rounded-full border-2 border-[#494fdf] border-t-transparent" />
+          <span className="text-sm">Preparing your preview…</span>
         </div>
-      ) : (
-        <div className="flex-1 min-h-30 w-full border border-dashed border-[#DDD7FE] rounded-xl p-4 bg-[#F8F7FF] flex flex-col items-center justify-center text-[#64749A] gap-1.5 shadow-2xs">
-          <TableIcon className="w-5 h-5 stroke-[1.5] text-indigo-400" />
-          <span className="text-xs">No dataset preview to display yet. Upload a CSV or Excel file to preview data.</span>
-        </div>
-      )}
-    </div>
+      ) : null}
+    </section>
   );
 }

@@ -19,8 +19,11 @@ export async function sendOtpEmail({ to, otp, type }: SendOtpEmailOptions): Prom
   const mailPassword = process.env.XEMPLA_MAIL_PASSWORD?.trim();
   const mailFrom = process.env.XEMPLA_MAIL_FROM?.trim() || "Xempla Workspace <auth@xempla.com>";
 
-  // Development fallback: Log OTP to console if SMTP server is not configured or missing credentials
   if (!mailServer || (useCredentials && (!mailUsername || !mailPassword))) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("SMTP server and required credentials must be configured in production.");
+    }
+
     console.log("\n=======================================================");
     console.log("  [XEMPLA AUTH - OTP EMAIL DISPATCH (DEV FALLBACK)]");
     console.log(`  Recipient: ${to}`);

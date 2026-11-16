@@ -19,17 +19,20 @@ export interface UserProfile {
   credit_balance: number;
   creditBalance?: number;
   is_verified: boolean;
+  email_verified?: boolean;
   isVerified?: boolean;
   auth_provider?: string;
   full_name?: string | null;
   name?: string | null;
   created_at?: string;
+  updated_at?: string;
+  last_login_at?: string | null;
   createdAt?: string | Date;
+  is_new_user?: boolean;
+  credits_awarded?: number;
 }
 
 export interface AuthSessionResponse {
-  access_token: string;
-  token_type: string;
   is_new_user: boolean;
   credits_awarded: number;
   user: UserProfile;

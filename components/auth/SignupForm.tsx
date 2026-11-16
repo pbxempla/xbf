@@ -1,43 +1,39 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { Mail, Check, User as UserIcon, Building2, ArrowRight, Loader2 } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { ArrowRight, Building2, Check, Loader2, Mail, User as UserIcon } from "lucide-react";
 import { classifyEmail } from "@/lib/emailClassifier";
 import { authClient } from "@/lib/auth-client";
 import { OtpRequestResponse } from "@/types/auth";
-import { XemplaLogo, CoinsStackIcon, GoogleLogo, MicrosoftLogo } from "@/components/icons/Icons";
+import { GoogleLogo, MicrosoftLogo, XemplaLogo } from "@/components/icons/Icons";
 
 interface SignupFormProps {
   onOtpRequested: (data: OtpRequestResponse) => void;
 }
 
 export function SignupForm({ onOtpRequested }: SignupFormProps) {
-  const [isSignInMode, setIsSignInMode] = useState<boolean>(false);
-  const [email, setEmail] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+  const [isSignInMode, setIsSignInMode] = useState(false);
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [oauthNotice, setOauthNotice] = useState<string | null>(null);
 
-  // Real-time email classification
-  const classification = useMemo(() => {
-    return classifyEmail(email);
-  }, [email]);
+  const classification = useMemo(() => classifyEmail(email), [email]);
 
-  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEmail(e.target.value);
-    if (errorMessage) setErrorMessage(null);
-    if (oauthNotice) setOauthNotice(null);
+  const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(event.target.value);
+    setErrorMessage(null);
+    setOauthNotice(null);
   };
 
   const handleUseWorkEmailInstead = () => {
-    const parts = email.split("@");
-    const username = parts[0] || "name";
+    const username = email.split("@")[0] || "name";
     setEmail(`${username}@company.com`);
     setErrorMessage(null);
   };
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
+  const handleSubmit = async (event?: React.FormEvent) => {
+    event?.preventDefault();
 
     if (!email.trim()) {
       setErrorMessage("Please enter your email address.");
@@ -54,8 +50,7 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
     setOauthNotice(null);
 
     try {
-      // Submitting an email calls authClient.emailOTP.sendVerificationOTP({ email, type: "sign-in" })
-      const { error } = await authClient.emailOTP.sendVerificationOTP({
+      const { error } = await authClient.emailOtp.sendVerificationOtp({
         email: email.trim(),
         type: "sign-in",
       });
@@ -81,213 +76,159 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
     }
   };
 
-  const handleOAuthClick = async (provider: "google" | "microsoft") => {
+  const handleOAuthClick = (provider: "google" | "microsoft") => {
+    const providerName = provider === "google" ? "Google" : "Microsoft";
     setErrorMessage(null);
     setOauthNotice(
-      `${provider === "google" ? "Google" : "Microsoft"} OAuth is not configured with client credentials. Please use passwordless email OTP.`
+      `${providerName} OAuth is not configured with client credentials. Please use passwordless email OTP.`,
     );
   };
 
   return (
-    <div className="w-full flex flex-col">
-      {/* Top Xempla Logo */}
-      <div className="mb-10">
+    <div className="auth-form-content flex w-full flex-col font-sans text-[#191c1f]">
+      <div className="auth-form-brand mb-8">
         <XemplaLogo />
       </div>
 
-      {/* Main Heading */}
-      <h1 className="text-3xl sm:text-[34px] font-extrabold tracking-tight text-[#0F172A] font-sans leading-tight">
-        {isSignInMode ? "Sign in to your account" : "Create your Xempla account"}
-      </h1>
+      <div className="auth-form-intro mb-6">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#5c5e60]">
+          A clearer way to work
+        </p>
+        <h1 className="text-[34px] font-medium leading-[1.08] tracking-[-0.04em] text-[#191c1f] sm:text-[40px]">
+          {isSignInMode ? "Welcome back." : "Start something great."}
+        </h1>
+        <p className="mt-3 max-w-sm text-sm leading-6 text-[#505a63]">
+          {isSignInMode
+            ? "Enter your email and we’ll send you a secure sign-in code."
+            : "Create your Xempla account and bring your work together."}
+        </p>
+      </div>
 
-      {/* Subtitle */}
-      <p className="text-[14px] text-slate-500 mt-2.5 font-normal">
-        {isSignInMode
-          ? "Welcome back! Enter your email for instant passwordless sign-in."
-          : "Get started with instant credit points and passwordless login."}
-      </p>
-
-      {/* Error or Alert Message */}
       {errorMessage && (
-        <div className="mt-4 p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-medium text-red-700">
+        <div role="alert" className="mb-5 rounded-xl border border-[#e23b4a]/20 bg-[#e23b4a]/5 px-4 py-3 text-sm text-[#8b0000]">
           {errorMessage}
         </div>
       )}
 
-      {/* OAuth Notice Banner */}
       {oauthNotice && (
-        <div className="mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs font-medium text-amber-800 flex items-start gap-2">
-          <span className="shrink-0 text-amber-600 font-bold">ℹ</span>
-          <span>{oauthNotice}</span>
+        <div role="status" className="mb-5 rounded-xl border border-[#ec7e00]/20 bg-[#ec7e00]/5 px-4 py-3 text-sm leading-5 text-[#6b4200]">
+          {oauthNotice}
         </div>
       )}
 
-      {/* Form Body */}
-      <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-3">
-        {/* Email Input Field */}
-        <div>
-          <label
-            htmlFor="email-input"
-            className="block text-xs font-semibold text-slate-700 mb-2"
-          >
+      <form onSubmit={handleSubmit} className="flex flex-col">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <label htmlFor="email-input" className="text-sm font-semibold text-[#191c1f]">
             Email address
           </label>
-
-          <div className="relative flex items-center">
-            {/* Left Mail Icon */}
-            <div className="absolute left-4 text-slate-400 pointer-events-none">
-              <Mail className="w-5 h-5 stroke-[1.8]" />
-            </div>
-
-            {/* Main Input Field */}
-            <input
-              id="email-input"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={handleEmailChange}
-              placeholder="Enter your email address"
-              disabled={loading}
-              className="w-full h-[52px] pl-11 pr-11 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-900 placeholder-slate-400 focus:border-[#3B28CC] focus:ring-4 focus:ring-indigo-100/60 outline-none transition-all"
-            />
-
-            {/* Right Success Checkmark when email is valid */}
-            {classification.isValid && (
-              <div className="absolute right-3.5 w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 animate-scale-in">
-                <Check className="w-3.5 h-3.5 stroke-[2.8]" />
-              </div>
-            )}
-          </div>
+          {classification.isValid && !isSignInMode && (
+            <span aria-live="polite" className="inline-flex items-center gap-1.5 text-right text-xs text-[#505a63]">
+              {classification.emailType === "personal" ? (
+                <UserIcon aria-hidden="true" className="h-4 w-4 shrink-0 text-[#494fdf]" />
+              ) : (
+                <Building2 aria-hidden="true" className="h-4 w-4 shrink-0 text-[#494fdf]" />
+              )}
+              <span>
+                {classification.emailType === "personal" ? "Personal" : "Work"} email ·{" "}
+                <span className="font-semibold text-[#191c1f]">{classification.credits} credits</span>
+              </span>
+            </span>
+          )}
         </div>
-
-        {/* Dynamic Email Detection Status Badge */}
-        {classification.isValid && !isSignInMode && (
-          <div className="pt-0.5 animate-fade-in">
-            {classification.emailType === "personal" ? (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#EEF2FF] text-[#4F46E5] text-xs font-medium border border-indigo-100">
-                <UserIcon className="w-3.5 h-3.5 stroke-[2.2]" />
-                <span>Personal email detected</span>
-              </div>
-            ) : (
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#EFF6FF] text-[#2563EB] text-xs font-medium border border-blue-100">
-                <Building2 className="w-3.5 h-3.5 stroke-[2.2]" />
-                <span>Work email detected</span>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Action Buttons Section */}
-        <div className="mt-3 flex flex-col gap-3">
-          {/* Primary Action Button */}
-          <button
-            type="submit"
+        <div className="relative">
+          <Mail aria-hidden="true" className="pointer-events-none absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#8d969e]" />
+          <input
+            id="email-input"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={handleEmailChange}
+            placeholder="name@company.com"
             disabled={loading}
-            className="w-full h-[50px] px-5 rounded-xl bg-[#2b26c7] hover:bg-[#251fb8] text-white font-medium text-sm transition-all flex items-center justify-between shadow-lg shadow-indigo-600/20 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-          >
-            {loading ? (
-              <div className="w-full flex items-center justify-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-white" />
-                <span>Generating secure code...</span>
-              </div>
-            ) : (
-              <>
-                <span>Continue with this email</span>
-
-                {/* Credit Pill and Arrow (shown when email is classified) */}
-                {classification.isValid && !isSignInMode ? (
-                  <div className="flex items-center gap-3">
-                    <span className="text-white/30 text-xs">|</span>
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-white">
-                      <CoinsStackIcon className="w-3.5 h-3.5 text-white" />
-                      <span>{classification.credits} Credits</span>
-                    </div>
-                    <ArrowRight className="w-4 h-4 text-white ml-0.5" />
-                  </div>
-                ) : (
-                  <ArrowRight className="w-4 h-4 text-white" />
-                )}
-              </>
-            )}
-          </button>
-
-          {/* Secondary Action: Work Email Alternative (shown ONLY when Personal Email is detected) */}
-          {classification.isValid &&
-            classification.emailType === "personal" &&
-            !isSignInMode && (
-              <button
-                type="button"
-                onClick={handleUseWorkEmailInstead}
-                className="w-full h-[50px] px-5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-medium text-sm transition-all flex items-center justify-between shadow-xs cursor-pointer animate-fade-in"
-              >
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-slate-600" />
-                  <span>Use your work email instead</span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="text-slate-300 text-xs">|</span>
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#2563EB]">
-                    <CoinsStackIcon className="w-3.5 h-3.5 text-[#2563EB]" />
-                    <span>200 Credits</span>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-slate-500 ml-0.5" />
-                </div>
-              </button>
-            )}
+            className="h-14 w-full rounded-xl border border-[#e2e2e7] bg-white pl-12 pr-12 text-base tracking-[0.01em] text-[#191c1f] outline-none transition-colors placeholder:text-[#8d969e] focus:border-[#494fdf] focus:ring-2 focus:ring-[#494fdf]/15 disabled:bg-[#f4f4f4]"
+          />
+          {classification.isValid && (
+            <span className="absolute right-4 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-[#00a87e]/10 text-[#006400]">
+              <Check aria-label="Valid email" className="h-3 w-3" />
+            </span>
+          )}
         </div>
-      </form>
 
-      {/* "or continue with" Divider */}
-      <div className="relative my-7 flex items-center justify-center">
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-slate-200" />
-        </div>
-        <span className="relative bg-white px-3 text-xs text-slate-400 font-medium">
-          or continue with
-        </span>
-      </div>
-
-      {/* OAuth Buttons Section */}
-      <div className="flex flex-col gap-3">
-        {/* Google OAuth Button */}
         <button
-          type="button"
-          onClick={() => handleOAuthClick("google")}
-          className="w-full h-[50px] px-5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-medium text-sm transition-all flex items-center justify-center gap-3 shadow-xs cursor-pointer"
+          type="submit"
+          disabled={loading}
+          className="mt-5 flex h-12 w-full items-center justify-between rounded-full bg-black px-6 text-sm font-semibold tracking-[0.01em] text-white transition-colors hover:bg-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          <GoogleLogo className="w-5 h-5 shrink-0" />
-          <span>Continue with Google</span>
+          {loading ? (
+            <span className="mx-auto flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Sending secure code...
+            </span>
+          ) : (
+            <>
+              <span>
+                {!isSignInMode && classification.isValid
+                  ? `Continue with ${classification.credits} credits`
+                  : "Continue with email"}
+              </span>
+              <ArrowRight className="h-4 w-4" />
+            </>
+          )}
         </button>
 
-        {/* Microsoft OAuth Button */}
-        <button
-          type="button"
-          onClick={() => handleOAuthClick("microsoft")}
-          className="w-full h-[50px] px-5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 text-slate-800 font-medium text-sm transition-all flex items-center justify-center gap-3 shadow-xs cursor-pointer"
-        >
-          <MicrosoftLogo className="w-5 h-5 shrink-0" />
-          <span>Continue with Microsoft</span>
-        </button>
-      </div>
-
-      {/* Toggle Sign-In / Sign-Up Mode */}
-      <div className="mt-8 text-center">
-        <p className="text-xs text-slate-500 font-normal">
-          {isSignInMode ? "Don't have an account yet?" : "Already have an account?"}{" "}
+        {classification.isValid && classification.emailType === "personal" && !isSignInMode && (
           <button
             type="button"
-            onClick={() => {
-              setIsSignInMode(!isSignInMode);
-              setErrorMessage(null);
-              setOauthNotice(null);
-            }}
-            className="text-[#2563EB] hover:text-[#1D4ED8] font-semibold transition-colors cursor-pointer"
+            onClick={handleUseWorkEmailInstead}
+            className="mt-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-full border border-[#e2e2e7] px-6 py-2 text-left text-sm font-medium text-[#191c1f] transition-colors hover:bg-[#f4f4f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
           >
-            {isSignInMode ? "Sign up" : "Sign in"}
+            <span>Sign up with work email to get 200 credits</span>
+            <Building2 aria-hidden="true" className="h-4 w-4 shrink-0" />
           </button>
-        </p>
+        )}
+      </form>
+
+      <div className="auth-oauth-options">
+        <div className="my-5 flex items-center gap-4 text-xs text-[#8d969e]">
+          <span className="h-px flex-1 bg-[#e2e2e7]" />
+          or continue with
+          <span className="h-px flex-1 bg-[#e2e2e7]" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => handleOAuthClick("google")}
+            className="flex h-12 items-center justify-center gap-2 rounded-full border border-[#e2e2e7] text-sm font-semibold text-[#191c1f] transition-colors hover:bg-[#f4f4f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
+          >
+            <GoogleLogo className="h-[18px] w-[18px]" />
+            Google
+          </button>
+          <button
+            type="button"
+            onClick={() => handleOAuthClick("microsoft")}
+            className="flex h-12 items-center justify-center gap-2 rounded-full border border-[#e2e2e7] text-sm font-semibold text-[#191c1f] transition-colors hover:bg-[#f4f4f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
+          >
+            <MicrosoftLogo className="h-[18px] w-[18px]" />
+            Microsoft
+          </button>
+        </div>
       </div>
+
+      <p className="auth-form-toggle mt-6 text-center text-sm text-[#505a63]">
+        {isSignInMode ? "New to Xempla?" : "Already have an account?"}{" "}
+        <button
+          type="button"
+          onClick={() => {
+            setIsSignInMode(!isSignInMode);
+            setErrorMessage(null);
+            setOauthNotice(null);
+          }}
+          className="font-semibold text-[#376cd5] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
+        >
+          {isSignInMode ? "Create an account" : "Sign in"}
+        </button>
+      </p>
     </div>
   );
 }

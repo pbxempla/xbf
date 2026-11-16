@@ -1,7 +1,6 @@
 export type SupportedFileType = "csv" | "xls" | "xlsx";
 
 export interface ParsedFileData {
-  file: File;
   fileName: string;
   fileSize: number;
   formattedSize: string;
@@ -24,4 +23,101 @@ export interface FileValidationState {
   isValid: boolean;
   items: ValidationItem[];
   error?: string | null;
+}
+
+export type SecurityCheckStatus =
+  | "passed"
+  | "warning"
+  | "blocked"
+  | "not_applicable"
+  | "not_inspected";
+
+export type SecurityOutcome = "passed" | "warning" | "blocked";
+
+export type SecurityCheckId =
+  | "extension"
+  | "signature"
+  | "size"
+  | "structure"
+  | "macro"
+  | "external"
+  | "archive"
+  | "csv";
+
+export interface SecurityCheck {
+  id: SecurityCheckId;
+  label: string;
+  status: SecurityCheckStatus;
+  details: string;
+  mandatory: boolean;
+}
+
+export interface FileSecurityInspection {
+  fileType: SupportedFileType | null;
+  checks: SecurityCheck[];
+  outcome: SecurityOutcome;
+}
+
+export interface FileContentFindings {
+  formulaLikeValues: boolean;
+  oversizedFields: boolean;
+}
+
+export interface FileParseResult {
+  data: ParsedFileData | null;
+  items: ValidationItem[];
+  error?: string;
+  contentFindings?: FileContentFindings;
+}
+
+export interface BackendUploadCheck {
+  check: string;
+  status: SecurityCheckStatus;
+  message: string;
+}
+
+export interface BackendUploadValidationReport {
+  status: SecurityOutcome;
+  checks: BackendUploadCheck[];
+  findings: string[];
+}
+
+export type DetectedDataType =
+  | "string"
+  | "integer"
+  | "number"
+  | "boolean"
+  | "date"
+  | "datetime"
+  | "null";
+
+export interface PreviewColumn {
+  index: number;
+  name: string;
+  detected_type: DetectedDataType | string;
+  original_name?: string | null;
+}
+
+export interface BackendUploadPreview {
+  status: "ready" | "failed";
+  sheet_name: string | null;
+  columns: PreviewColumn[];
+  preview_rows: unknown[][];
+  preview_row_count: number;
+  total_rows: number;
+  total_columns: number;
+}
+
+export interface BackendUploadResponse {
+  upload_id: string;
+  original_filename: string;
+  file_size: number;
+  detected_file_type: SupportedFileType;
+  sha256: string;
+  validation_status: "passed" | "warning";
+  security_findings: string[];
+  validation_report: BackendUploadValidationReport;
+  quarantine_status: "quarantined";
+  created_at: string;
+  preview: BackendUploadPreview;
 }

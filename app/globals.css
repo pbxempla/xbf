@@ -48,3 +48,34 @@ body {
 .animate-scale-in {
   animation: scaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+@media (max-height: 640px) {
+  .auth-form-brand {
+    margin-bottom: 1rem;
+  }
+
+  .auth-form-intro {
+    margin-bottom: 1rem;
+  }
+
+  .auth-form-footnote {
+    display: none;
+  }
+
+  .auth-form-toggle {
+    margin-top: 1rem;
+  }
+
+  .auth-success-brand {
+    margin-bottom: 1rem;
+  }
+
+  .auth-success-banner {
+    margin-bottom: 1rem;
+  }
+
+  .auth-success-card {
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+}
