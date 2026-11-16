@@ -2,14 +2,24 @@
 
 import React from "react";
 import { FileSpreadsheet, FileText, UploadCloud } from "lucide-react";
-import { ParsedFileData } from "@/types/upload";
+import { BackendUploadResponse, ParsedFileData } from "@/types/upload";
 
 interface UploadedFileCardProps {
   data: ParsedFileData | null;
+  backendUpload?: BackendUploadResponse | null;
 }
 
-export function UploadedFileCard({ data }: UploadedFileCardProps) {
-  const isExcel = data && (data.fileType === "xls" || data.fileType === "xlsx");
+export function UploadedFileCard({ data, backendUpload }: UploadedFileCardProps) {
+  const isExcel =
+    (backendUpload &&
+      (backendUpload.detected_file_type === "xls" ||
+        backendUpload.detected_file_type === "xlsx")) ||
+    (data && (data.fileType === "xls" || data.fileType === "xlsx"));
+
+  const fileName = backendUpload?.original_filename ?? data?.fileName;
+  const formattedSize = data?.formattedSize;
+  const rowCount = backendUpload?.preview?.total_rows ?? data?.rowCount;
+  const columnCount = backendUpload?.preview?.total_columns ?? data?.columnCount;
 
   return (
     <section className="flex w-full shrink-0 flex-col">
@@ -26,9 +36,9 @@ export function UploadedFileCard({ data }: UploadedFileCardProps) {
               )}
             </div>
             <div className="flex min-w-0 flex-col">
-              <span className="truncate text-sm font-semibold text-[#191c1f]">{data.fileName}</span>
+              <span className="truncate text-sm font-semibold text-[#191c1f]">{fileName}</span>
               <span className="mt-1 text-xs text-[#5c5e60]">
-                {data.formattedSize} · {data.rowCount.toLocaleString()} rows · {data.columnCount} columns
+                {formattedSize} · {rowCount?.toLocaleString()} rows · {columnCount} columns
               </span>
             </div>
           </div>

@@ -82,6 +82,32 @@ export interface BackendUploadValidationReport {
   findings: string[];
 }
 
+export type DetectedDataType =
+  | "string"
+  | "integer"
+  | "number"
+  | "boolean"
+  | "date"
+  | "datetime"
+  | "null";
+
+export interface PreviewColumn {
+  index: number;
+  name: string;
+  detected_type: DetectedDataType | string;
+  original_name?: string | null;
+}
+
+export interface BackendUploadPreview {
+  status: "ready" | "failed";
+  sheet_name: string | null;
+  columns: PreviewColumn[];
+  preview_rows: unknown[][];
+  preview_row_count: number;
+  total_rows: number;
+  total_columns: number;
+}
+
 export interface BackendUploadResponse {
   upload_id: string;
   original_filename: string;
@@ -93,4 +119,5 @@ export interface BackendUploadResponse {
   validation_report: BackendUploadValidationReport;
   quarantine_status: "quarantined";
   created_at: string;
+  preview: BackendUploadPreview;
 }

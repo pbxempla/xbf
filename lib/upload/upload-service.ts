@@ -1,6 +1,8 @@
 import {
   BackendUploadCheck,
+  BackendUploadPreview,
   BackendUploadResponse,
+  PreviewColumn,
   SecurityCheckStatus,
   SecurityOutcome,
   SupportedFileType,
@@ -60,6 +62,45 @@ function parseCheck(value: unknown): BackendUploadCheck | null {
   };
 }
 
+function parsePreview(value: unknown): BackendUploadPreview | null {
+  if (!isRecord(value)) return null;
+  if (value.status !== "ready" && value.status !== "failed") return null;
+  if (!Array.isArray(value.columns) || !Array.isArray(value.preview_rows)) return null;
+  if (
+    typeof value.preview_row_count !== "number" ||
+    typeof value.total_rows !== "number" ||
+    typeof value.total_columns !== "number"
+  ) {
+    return null;
+  }
+  const columns: PreviewColumn[] = [];
+  for (const item of value.columns) {
+    if (
+      !isRecord(item) ||
+      typeof item.index !== "number" ||
+      typeof item.name !== "string" ||
+      typeof item.detected_type !== "string"
+    ) {
+      return null;
+    }
+    columns.push({
+      index: item.index,
+      name: item.name,
+      detected_type: item.detected_type,
+      original_name: typeof item.original_name === "string" ? item.original_name : null,
+    });
+  }
+  return {
+    status: value.status,
+    sheet_name: typeof value.sheet_name === "string" ? value.sheet_name : null,
+    columns,
+    preview_rows: value.preview_rows as unknown[][],
+    preview_row_count: value.preview_row_count,
+    total_rows: value.total_rows,
+    total_columns: value.total_columns,
+  };
+}
+
 function parseUploadResponse(
   value: unknown,
   file: File,
@@ -115,6 +156,19 @@ function parseUploadResponse(
   ) {
     return null;
   }
+  const preview = value.preview
+    ? parsePreview(value.preview)
+    : {
+        status: "ready" as const,
+        sheet_name: null,
+        columns: [],
+        preview_rows: [],
+        preview_row_count: 0,
+        total_rows: 0,
+        total_columns: 0,
+      };
+  if (!preview) return null;
+
   return {
     upload_id: value.upload_id,
     original_filename: value.original_filename,
@@ -130,6 +184,7 @@ function parseUploadResponse(
     },
     quarantine_status: "quarantined",
     created_at: value.created_at,
+    preview,
   };
 }
 

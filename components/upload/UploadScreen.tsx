@@ -331,14 +331,18 @@ export function UploadScreen({
         sessionStorage.setItem(
           "xempla_current_dataset",
           JSON.stringify({
-            fileName: parsedData.fileName,
-            fileSize: parsedData.fileSize,
+            fileName: upload.original_filename,
+            fileSize: upload.file_size,
             formattedSize: parsedData.formattedSize,
-            fileType: parsedData.fileType,
-            headers: parsedData.headers,
-            rowCount: parsedData.rowCount,
-            columnCount: parsedData.columnCount,
-            previewRows: parsedData.rows,
+            fileType: upload.detected_file_type,
+            headers: upload.preview?.columns?.length
+              ? upload.preview.columns.map((c) => c.name)
+              : parsedData.headers,
+            rowCount: upload.preview?.total_rows ?? parsedData.rowCount,
+            columnCount: upload.preview?.total_columns ?? parsedData.columnCount,
+            previewRows: upload.preview?.preview_rows ?? parsedData.rows,
+            columns: upload.preview?.columns ?? null,
+            sheetName: upload.preview?.sheet_name ?? null,
             backendUploadId: upload.upload_id,
             backendValidationStatus: upload.validation_status,
             backendSecurityFindings: upload.security_findings,
@@ -390,7 +394,7 @@ export function UploadScreen({
         onLogout={onLogout}
       />
 
-      <main className="mx-auto flex min-h-0 w-full max-w-[1360px] flex-1 flex-col px-5 py-8 sm:px-8 sm:py-10 lg:overflow-hidden lg:px-10 lg:py-6">
+      <main className="mx-auto flex min-h-0 w-full max-w-340 flex-1 flex-col px-5 py-8 sm:px-8 sm:py-10 lg:overflow-hidden lg:px-10 lg:py-6">
         <UploadTitleSection />
 
         <div className={`grid min-h-0 flex-1 items-stretch gap-5 lg:gap-7 ${hasSelectedFile ? "lg:grid-cols-[.8fr_1.2fr]" : "lg:grid-cols-[1.05fr_.95fr]"}`}>
@@ -398,9 +402,9 @@ export function UploadScreen({
             <FileDropzone onFileSelected={handleFileSelected} disabled={isBusy} />
           )}
 
-          <section className="flex min-h-[520px] flex-col gap-6 rounded-[20px] border border-[#e2e2e7] bg-white p-5 sm:p-6 lg:min-h-0 lg:gap-4 lg:overflow-y-auto lg:p-5">
+          <section className="flex min-h-130 flex-col gap-6 rounded-[20px] border border-[#e2e2e7] bg-white p-5 sm:p-6 lg:min-h-0 lg:gap-4 lg:overflow-y-auto lg:p-5">
             <h2 className="text-xl font-medium tracking-tight text-[#191c1f]">Dataset details</h2>
-            <UploadedFileCard data={parsedData} />
+            <UploadedFileCard data={parsedData} backendUpload={backendUpload} />
 
             <FileValidationCard
               items={validationItems}
@@ -419,19 +423,41 @@ export function UploadScreen({
                     className="rounded-xl border border-[#e2e2e7] bg-[#f4f4f4] p-3 text-xs text-[#505a63]"
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <span>
+                      <span className="font-medium text-[#191c1f]">
                         {uploadProgress < 100
-                          ? `Uploading to the backend (${uploadProgress}%)…`
-                          : "Upload sent. Waiting for backend validation…"}
+                          ? `Uploading your file (${uploadProgress}%)…`
+                          : "Verifying file security & preparing your data preview…"}
                       </span>
-                      <span className="font-medium">Backend validation</span>
+                      <span className="text-[11px] font-semibold text-[#494fdf]">
+                        {uploadProgress < 100 ? "Transfer" : "Processing"}
+                      </span>
                     </div>
                     <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#e2e2e7]">
-                      <div
-                        className="h-full rounded-full bg-[#494fdf] transition-[width]"
-                        style={{ width: `${uploadProgress}%` }}
-                      />
+                      {uploadProgress < 100 ? (
+                        <div
+                          className="h-full rounded-full bg-[#494fdf] transition-[width] duration-150"
+                          style={{ width: `${uploadProgress}%` }}
+                        />
+                      ) : (
+                        <div className="h-full w-full rounded-full bg-[#494fdf] animate-pulse" />
+                      )}
                     </div>
+                    <p className="mt-1 text-[11px] text-[#5c5e60]">
+                      {uploadProgress < 100
+                        ? "Streaming original file to secure quarantine..."
+                        : "Inspecting format, structure, security, and computing exact data row counts..."}
+                    </p>
+                  </div>
+                )}
+                {backendUpload && (
+                  <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs text-emerald-800">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">Your preview is ready.</span>
+                      <span>({backendUpload.preview?.total_rows?.toLocaleString() ?? 0} data rows counted)</span>
+                    </div>
+                    <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+                      Authoritative
+                    </span>
                   </div>
                 )}
                 {backendUpload && (
@@ -493,7 +519,7 @@ export function UploadScreen({
           </section>
 
           {hasSelectedFile && (
-            <section className="flex min-h-[420px] min-w-0 flex-col gap-4 rounded-[20px] border border-[#e2e2e7] bg-white p-5 sm:p-6 lg:min-h-0 lg:p-5">
+            <section className="flex min-h-105 min-w-0 flex-col gap-4 rounded-[20px] border border-[#e2e2e7] bg-white p-5 sm:p-6 lg:min-h-0 lg:p-5">
               <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-medium tracking-tight text-[#191c1f]">Data preview</h2>
                 <div className="flex items-center gap-2">
@@ -528,6 +554,7 @@ export function UploadScreen({
               </div>
               <DataPreviewTable
                 data={parsedData}
+                backendPreview={backendUpload?.preview ?? null}
                 isLoading={isValidating}
                 showQuickOverview={hasSelectedFile}
               />
@@ -538,7 +565,7 @@ export function UploadScreen({
         <div className="mt-6 flex w-full flex-col-reverse items-stretch justify-between gap-4 sm:flex-row sm:items-center lg:mt-4">
           <p className="text-xs leading-5 text-[#5c5e60]">
             {backendUpload
-              ? "Backend validation is complete. Mapping currently uses the local preview only."
+              ? "Backend preview is ready. Review your columns and click Continue to proceed to schema mapping."
               : "Next step: Securely upload this inspected file before continuing."}
           </p>
           <button
