@@ -44,12 +44,21 @@ and timeouts do not advance the workflow. Backend findings are shown on the
 upload page. Accepted upload ID and validation details are retained with the
 local preview for the mapping page.
 
-Backend quarantine is available, but there is not yet a backend column-mapping
-or processing endpoint. The mapping page currently displays the local preview
-and reports this integration boundary; it does not claim that backend
-processing has occurred. Pre-upload inspection does not send the file to the
-backend, S3, or third-party scanning services. Neither frontend nor backend
-checks are an antivirus scan or guarantee that a file is malware-free.
+After a successful upload, the mapping page requests a backend mapping
+proposal, presents fixed CSV source columns on the left with canonical-field
+selectors in the middle, and confirms extraction before displaying valid and
+invalid row counts. The deterministic backend mapper runs first. If it leaves
+ambiguous or required fields unresolved, the frontend automatically requests
+bounded Jev suggestions through the server-only OpenRouter route; suggestions
+still require user confirmation. `OPENROUTER_API_KEY` is an optional server-only
+frontend environment variable and must never use a `NEXT_PUBLIC_` prefix.
+Analytics submission is available after extraction when the backend's
+`ANALYTICS_ENGINE_API_URL` is configured. See the backend README for endpoint
+and environment details.
+
+Pre-upload inspection does not send the file to the backend, S3, or third-party
+scanning services. Neither frontend nor backend checks are an antivirus scan
+or guarantee that a file is malware-free.
 
 Configure `NEXT_PUBLIC_ALLOWED_FILE_EXTENSIONS` (default `.csv,.xls,.xlsx`)
 and `NEXT_PUBLIC_MAX_FILE_SIZE_MB` (default `100`) in the frontend `.env`.

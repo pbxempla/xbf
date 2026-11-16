@@ -13,6 +13,25 @@ const allowedPaths = new Set([
   "uploads",
 ]);
 
+function isAllowedBackendPath(path: string[], method: string): boolean {
+  const joined = path.join("/");
+  if (allowedPaths.has(joined)) return true;
+  if (
+    (path.length !== 3 && path.length !== 4) ||
+    path[0] !== "uploads" ||
+    !/^[0-9a-f-]{36}$/i.test(path[1])
+  ) {
+    return false;
+  }
+  const route = path.slice(2).join("/");
+  return (
+    (route === "import" && method === "GET") ||
+    (route === "mapping/proposal" && method === "POST") ||
+    (route === "mapping/confirm" && method === "POST") ||
+    (route === "analytics/submit" && method === "POST")
+  );
+}
+
 function createAuthAssertion(
   user: {
     id: string;
@@ -59,10 +78,9 @@ function createAuthAssertion(
 
 async function proxyRequest(request: NextRequest, context: RouteContext) {
   const { path } = await context.params;
-  const backendPath = path.join("/");
   const method = request.method.toUpperCase();
 
-  if (!allowedPaths.has(backendPath)) {
+  if (!isAllowedBackendPath(path, method)) {
     return NextResponse.json({ detail: "Not found." }, { status: 404 });
   }
 
