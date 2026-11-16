@@ -17,6 +17,9 @@ interface CachedDatasetInfo {
   headers: string[];
   rowCount: number;
   columnCount: number;
+  backendUploadId?: string;
+  backendValidationStatus?: "passed" | "warning";
+  backendSecurityFindings?: string[];
 }
 
 export default function MappingPage() {
@@ -134,12 +137,29 @@ export default function MappingPage() {
               Data Mapping Foundation
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Your dataset has been validated and parsed. Schema mapping will map these columns into Xempla entities.
+              Your dataset passed backend file validation and was stored in private quarantine. This page currently shows the local preview; backend column mapping and processing are not connected yet.
             </p>
           </div>
 
           {dataset ? (
             <div className="flex flex-col gap-4">
+              {dataset.backendUploadId && dataset.backendValidationStatus && (
+                <div
+                  className={`rounded-xl border p-3 text-xs leading-5 ${
+                    dataset.backendValidationStatus === "warning"
+                      ? "border-amber-200 bg-amber-50 text-amber-900"
+                      : "border-emerald-100 bg-emerald-50 text-emerald-800"
+                  }`}
+                >
+                  <p className="font-semibold">
+                    Backend validation: {dataset.backendValidationStatus}
+                  </p>
+                  {dataset.backendSecurityFindings?.slice(0, 3).map((finding) => (
+                    <p key={finding} className="mt-1">{finding}</p>
+                  ))}
+                </div>
+              )}
+
               <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">

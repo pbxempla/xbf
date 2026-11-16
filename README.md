@@ -29,9 +29,27 @@ after changing environment variables.
 ## Upload file security checks
 
 The upload page performs file-format and suspicious-content checks locally in
-the browser before continuing. During this inspection, file contents are not
-sent to FastAPI, S3, or third-party scanning services. These checks are not an
-antivirus scan and cannot guarantee that a file is malware-free.
+the browser before sending the selected file. The file is sent only after local
+mandatory checks pass and any local warnings are acknowledged. The upload
+request goes to the same-origin `/api/backend/uploads` proxy, which verifies
+the Better Auth session and signs the backend identity assertion; browser code
+does not receive or send user IDs or backend credentials. The proxy forwards
+the multipart stream to FastAPI's `POST /api/v1/uploads` endpoint.
+
+The backend is the final authority. The browser only enables mapping after a
+valid backend response confirms `validation_status` is `passed` or `warning`
+and `quarantine_status` is `quarantined`. Backend warnings require a separate
+acknowledgement. Rejected or malformed responses, HTTP errors, network errors,
+and timeouts do not advance the workflow. Backend findings are shown on the
+upload page. Accepted upload ID and validation details are retained with the
+local preview for the mapping page.
+
+Backend quarantine is available, but there is not yet a backend column-mapping
+or processing endpoint. The mapping page currently displays the local preview
+and reports this integration boundary; it does not claim that backend
+processing has occurred. Pre-upload inspection does not send the file to the
+backend, S3, or third-party scanning services. Neither frontend nor backend
+checks are an antivirus scan or guarantee that a file is malware-free.
 
 Configure `NEXT_PUBLIC_ALLOWED_FILE_EXTENSIONS` (default `.csv,.xls,.xlsx`)
 and `NEXT_PUBLIC_MAX_FILE_SIZE_MB` (default `100`) in the frontend `.env`.
@@ -41,14 +59,19 @@ Only CSV, legacy XLS, and XLSX are implemented formats; unsupported formats in
 the extension list are ignored. Restart the Next.js server after changing the
 values.
 
-For local verification, run `npm run test:upload-security`. Sign in and try
-valid CSV/XLS/XLSX samples, an uppercase extension, malformed CSV, a wrong
-extension/signature pair, and a harmless synthetic archive containing macro or
-external-relationship metadata. In DevTools Network, select, replace, and
-remove files and confirm that no request contains a file or file contents.
-The existing profile/session request may still occur when opening the page.
-Warnings require explicit acknowledgement before continuing; blocked files
-must remain unable to continue.
+For automated verification, run `npm run test:upload-security`. For a real
+integration test, apply the backend migrations, start FastAPI and Next.js with
+matching `AUTH_BRIDGE_SECRET` values and a reachable `BACKEND_API_URL`, then
+sign in with a verified Better Auth session. Select valid CSV/XLS/XLSX samples
+and confirm the browser inspection completes before any upload request is
+made. Acknowledge local warnings if present, choose **Upload and validate**,
+and confirm the Network panel shows a multipart POST to
+`/api/backend/uploads` (the proxy forwards `file` to `/api/v1/uploads`).
+Confirm accepted backend results and findings are displayed and mapping remains
+blocked until backend warnings are acknowledged. Test expired sign-in,
+unsupported/oversized files, malformed samples, network failure, and backend
+unavailability; none should navigate to mapping. A successful upload is
+quarantined and does not imply server-side mapping or processing.
 
 ## Deploying with environment variables
 

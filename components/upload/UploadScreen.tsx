@@ -10,7 +10,9 @@ import { UploadedFileCard } from "./UploadedFileCard";
 import { FileValidationCard } from "./FileValidationCard";
 import { DataPreviewTable } from "./DataPreviewTable";
 import { SecurityInspectionPanel } from "./SecurityInspectionPanel";
+import { BackendUploadResultPanel } from "./BackendUploadResultPanel";
 import {
+  BackendUploadResponse,
   FileSecurityInspection,
   ParsedFileData,
   SecurityCheckId,
@@ -25,6 +27,7 @@ import {
   inspectFileSecurity,
 } from "@/lib/upload/file-security-inspector";
 import { UPLOAD_SECURITY_CONFIG } from "@/lib/upload/security-config";
+import { uploadDataset, UploadApiError } from "@/lib/upload/upload-service";
 
 interface UploadScreenProps {
   userEmail?: string;
@@ -64,6 +67,7 @@ export function UploadScreen({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const processedFileRef = useRef<ProcessedFileCache | null>(null);
   const inspectionRunRef = useRef(0);
+  const uploadControllerRef = useRef<AbortController | null>(null);
 
   const [parsedData, setParsedData] = useState<ParsedFileData | null>(null);
   const [validationItems, setValidationItems] = useState<ValidationItem[]>(DEFAULT_VALIDATION_ITEMS);
@@ -72,13 +76,38 @@ export function UploadScreen({
   const [inspection, setInspection] = useState<FileSecurityInspection | null>(null);
   const [hasSelectedFile, setHasSelectedFile] = useState(false);
   const [warningsAcknowledged, setWarningsAcknowledged] = useState(false);
+  const [backendWarningsAcknowledged, setBackendWarningsAcknowledged] = useState(false);
+  const [backendUpload, setBackendUpload] = useState<BackendUploadResponse | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadErrorFindings, setUploadErrorFindings] = useState<string[]>([]);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const [datasetCacheSaved, setDatasetCacheSaved] = useState(false);
+
+  const clearSavedDataset = () => {
+    try {
+      sessionStorage.removeItem("xempla_current_dataset");
+    } catch {
+      setUploadError("Could not clear the previous browser preview. Refresh before selecting another file.");
+    }
+  };
 
   const handleFileSelected = async (file: File) => {
+    uploadControllerRef.current?.abort();
+    uploadControllerRef.current = null;
+    setIsUploading(false);
+    setBackendUpload(null);
+    setBackendWarningsAcknowledged(false);
+    setUploadError(null);
+    setUploadErrorFindings([]);
+    setUploadProgress(0);
+    setDatasetCacheSaved(false);
     const requestId = ++inspectionRunRef.current;
     const cached = processedFileRef.current;
     setHasSelectedFile(true);
     setErrorMessage(null);
     setWarningsAcknowledged(false);
+    clearSavedDataset();
     setIsValidating(true);
 
     if (cached?.file === file) {
@@ -223,6 +252,8 @@ export function UploadScreen({
   };
 
   const handleRemoveFile = () => {
+    uploadControllerRef.current?.abort();
+    uploadControllerRef.current = null;
     inspectionRunRef.current += 1;
     processedFileRef.current = null;
     setParsedData(null);
@@ -231,7 +262,15 @@ export function UploadScreen({
     setInspection(null);
     setHasSelectedFile(false);
     setWarningsAcknowledged(false);
+    setBackendWarningsAcknowledged(false);
+    setBackendUpload(null);
+    setUploadError(null);
+    setUploadErrorFindings([]);
+    setUploadProgress(0);
+    setIsUploading(false);
+    setDatasetCacheSaved(false);
     setIsValidating(false);
+    clearSavedDataset();
   };
 
   const handleReplaceFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -240,7 +279,7 @@ export function UploadScreen({
     event.target.value = "";
   };
 
-  const isReadyToContinue = Boolean(
+  const isReadyForUpload = Boolean(
     parsedData &&
       !isValidating &&
       inspection &&
@@ -250,10 +289,44 @@ export function UploadScreen({
       validationItems.every((item) => item.passed)
   );
 
-  const handleContinueToMapping = () => {
-    if (isValidating || !isReadyToContinue || !parsedData) return;
+  const handleContinueToMapping = async () => {
+    if (isValidating || isUploading || !isReadyForUpload || !parsedData) return;
+    if (backendUpload) {
+      if (
+        backendUpload.validation_status === "warning" &&
+        !backendWarningsAcknowledged
+      ) {
+        return;
+      }
+      if (!datasetCacheSaved) return;
+      router.push("/mapping");
+      return;
+    }
 
-    if (typeof window !== "undefined") {
+    const selectedFile = processedFileRef.current?.file;
+    if (!selectedFile || selectedFile.name !== parsedData.fileName) return;
+    const controller = new AbortController();
+    uploadControllerRef.current = controller;
+    setIsUploading(true);
+    setUploadProgress(0);
+    setUploadError(null);
+    setUploadErrorFindings([]);
+
+    try {
+      const upload = await uploadDataset(selectedFile, {
+        signal: controller.signal,
+        onProgress: setUploadProgress,
+      });
+      if (upload.validation_status !== "passed" && upload.validation_status !== "warning") {
+        throw new UploadApiError(
+          "The backend did not confirm an accepted validation status.",
+          200,
+          upload.security_findings,
+        );
+      }
+      setBackendUpload(upload);
+      setBackendWarningsAcknowledged(upload.validation_status === "passed");
+
       try {
         sessionStorage.setItem(
           "xempla_current_dataset",
@@ -266,15 +339,46 @@ export function UploadScreen({
             rowCount: parsedData.rowCount,
             columnCount: parsedData.columnCount,
             previewRows: parsedData.rows,
-          })
+            backendUploadId: upload.upload_id,
+            backendValidationStatus: upload.validation_status,
+            backendSecurityFindings: upload.security_findings,
+          }),
         );
+        setDatasetCacheSaved(true);
       } catch {
-        // Ignore quota errors if dataset preview is large
+        setDatasetCacheSaved(false);
+        setUploadError(
+          "The backend accepted the file, but this browser could not save the local preview. Remove the file and try again.",
+        );
+      }
+    } catch (error: unknown) {
+      if (controller.signal.aborted) return;
+      if (error instanceof UploadApiError) {
+        setUploadError(error.message);
+        setUploadErrorFindings(error.findings);
+      } else {
+        setUploadError("The upload could not be completed. Please try again.");
+      }
+    } finally {
+      if (uploadControllerRef.current === controller) {
+        uploadControllerRef.current = null;
+        setIsUploading(false);
       }
     }
-
-    router.push("/mapping");
   };
+
+  const isBusy = isValidating || isUploading;
+  const canContinueToMapping = Boolean(
+    backendUpload &&
+      datasetCacheSaved &&
+      (backendUpload.validation_status !== "warning" ||
+        backendWarningsAcknowledged),
+  );
+  const isContinueButtonEnabled = Boolean(
+    isReadyForUpload &&
+      !isBusy &&
+      (!backendUpload || canContinueToMapping),
+  );
 
   return (
     <div className="flex h-dvh min-h-screen w-full flex-col bg-white text-[#191c1f] lg:min-h-0 lg:overflow-hidden">
@@ -291,7 +395,7 @@ export function UploadScreen({
 
         <div className={`grid min-h-0 flex-1 items-stretch gap-5 lg:gap-7 ${hasSelectedFile ? "lg:grid-cols-[.8fr_1.2fr]" : "lg:grid-cols-[1.05fr_.95fr]"}`}>
           {!hasSelectedFile && (
-            <FileDropzone onFileSelected={handleFileSelected} disabled={isValidating} />
+            <FileDropzone onFileSelected={handleFileSelected} disabled={isBusy} />
           )}
 
           <section className="flex min-h-[520px] flex-col gap-6 rounded-[20px] border border-[#e2e2e7] bg-white p-5 sm:p-6 lg:min-h-0 lg:gap-4 lg:overflow-y-auto lg:p-5">
@@ -300,21 +404,85 @@ export function UploadScreen({
 
             <FileValidationCard
               items={validationItems}
-              isValidating={isValidating}
+              isValidating={isBusy}
               hasFile={hasSelectedFile}
               error={errorMessage}
             />
             {!hasSelectedFile && <DataPreviewTable data={null} isLoading={false} />}
             {hasSelectedFile && (
               <>
-                <SecurityInspectionPanel inspection={inspection} isInspecting={isValidating} />
+                <SecurityInspectionPanel inspection={inspection} isInspecting={isBusy && !isUploading} />
+                {isUploading && (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    className="rounded-xl border border-[#e2e2e7] bg-[#f4f4f4] p-3 text-xs text-[#505a63]"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span>
+                        {uploadProgress < 100
+                          ? `Uploading to the backend (${uploadProgress}%)…`
+                          : "Upload sent. Waiting for backend validation…"}
+                      </span>
+                      <span className="font-medium">Backend validation</span>
+                    </div>
+                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#e2e2e7]">
+                      <div
+                        className="h-full rounded-full bg-[#494fdf] transition-[width]"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {backendUpload && (
+                  <BackendUploadResultPanel upload={backendUpload} />
+                )}
+                {backendUpload?.validation_status === "warning" && (
+                  <label className="flex items-start gap-2 text-xs leading-5 text-[#3a3d40]">
+                    <input
+                      type="checkbox"
+                      checked={backendWarningsAcknowledged}
+                      onChange={(event) =>
+                        setBackendWarningsAcknowledged(event.target.checked)
+                      }
+                      disabled={isBusy}
+                      className="mt-1 accent-[#494fdf]"
+                    />
+                    I reviewed the backend findings and want to continue.
+                  </label>
+                )}
+                {uploadError && (
+                  <div
+                    role="alert"
+                    className="rounded-xl border border-[#e23b4a]/20 bg-[#e23b4a]/5 p-3 text-xs leading-5 text-[#8b0000]"
+                  >
+                    <p>{uploadError}</p>
+                    {uploadErrorFindings.length > 0 && (
+                      <ul className="mt-2 list-inside list-disc space-y-1">
+                        {uploadErrorFindings.slice(0, 3).map((finding) => (
+                          <li key={finding}>{finding}</li>
+                        ))}
+                        {uploadErrorFindings.length > 3 && (
+                          <li>
+                            {uploadErrorFindings.length - 3} additional finding(s) were reported.
+                          </li>
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                )}
+                {backendUpload && !datasetCacheSaved && (
+                  <p role="alert" className="text-xs leading-5 text-[#8b0000]">
+                    The upload is quarantined by the backend, but the local mapping preview could not be saved.
+                  </p>
+                )}
                 {inspection?.outcome === "warning" && (
                   <label className="flex items-start gap-2 text-xs leading-5 text-[#3a3d40]">
                     <input
                       type="checkbox"
                       checked={warningsAcknowledged}
                       onChange={(event) => setWarningsAcknowledged(event.target.checked)}
-                      disabled={isValidating}
+                      disabled={isBusy}
                       className="mt-1 accent-[#494fdf]"
                     />
                     I reviewed the inspection warnings and want to continue.
@@ -335,12 +503,12 @@ export function UploadScreen({
                     accept={UPLOAD_SECURITY_CONFIG.allowedExtensions.map((extension) => `.${extension}`).join(",")}
                     onChange={handleReplaceFile}
                     className="hidden"
-                    disabled={isValidating}
+                    disabled={isBusy}
                   />
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    disabled={isValidating}
+                    disabled={isBusy}
                     className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#e2e2e7] px-4 text-sm font-semibold text-[#191c1f] transition-colors hover:bg-[#f4f4f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] disabled:cursor-wait disabled:opacity-60"
                   >
                     <Upload aria-hidden="true" className="h-4 w-4" />
@@ -349,7 +517,7 @@ export function UploadScreen({
                   <button
                     type="button"
                     onClick={handleRemoveFile}
-                    disabled={isValidating}
+                    disabled={isBusy}
                     aria-label="Remove uploaded file"
                     title="Remove uploaded file"
                     className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e2e2e7] text-[#5c5e60] transition-colors hover:bg-[#fff1f2] hover:text-[#e23b4a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] disabled:cursor-wait disabled:opacity-60"
@@ -369,19 +537,29 @@ export function UploadScreen({
 
         <div className="mt-6 flex w-full flex-col-reverse items-stretch justify-between gap-4 sm:flex-row sm:items-center lg:mt-4">
           <p className="text-xs leading-5 text-[#5c5e60]">
-            Next step: Map your columns to Xempla fields.
+            {backendUpload
+              ? "Backend validation is complete. Mapping currently uses the local preview only."
+              : "Next step: Securely upload this inspected file before continuing."}
           </p>
           <button
             type="button"
-            onClick={handleContinueToMapping}
-            disabled={!isReadyToContinue || isValidating}
+            onClick={() => void handleContinueToMapping()}
+            disabled={!isContinueButtonEnabled}
             className={`inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-7 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] sm:w-auto ${
-              isReadyToContinue
+              isContinueButtonEnabled
                 ? "cursor-pointer bg-black text-white hover:bg-[#191c1f]"
                 : "cursor-not-allowed border border-[#e2e2e7] bg-[#f4f4f4] text-[#8d969e]"
             }`}
           >
-            <span>Continue to mapping</span>
+            <span>
+              {isUploading
+                ? uploadProgress < 100
+                  ? `Uploading ${uploadProgress}%`
+                  : "Validating upload…"
+                : backendUpload
+                  ? "Continue to mapping"
+                  : "Upload and validate"}
+            </span>
             <ArrowRight aria-hidden="true" className="h-4 w-4" />
           </button>
         </div>

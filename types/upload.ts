@@ -69,3 +69,28 @@ export interface FileParseResult {
   error?: string;
   contentFindings?: FileContentFindings;
 }
+
+export interface BackendUploadCheck {
+  check: string;
+  status: SecurityCheckStatus;
+  message: string;
+}
+
+export interface BackendUploadValidationReport {
+  status: SecurityOutcome;
+  checks: BackendUploadCheck[];
+  findings: string[];
+}
+
+export interface BackendUploadResponse {
+  upload_id: string;
+  original_filename: string;
+  file_size: number;
+  detected_file_type: SupportedFileType;
+  sha256: string;
+  validation_status: "passed" | "warning";
+  security_findings: string[];
+  validation_report: BackendUploadValidationReport;
+  quarantine_status: "quarantined";
+  created_at: string;
+}

@@ -10,6 +10,7 @@ const allowedPaths = new Set([
   "users/me",
   "users/me/credits",
   "users/me/credits/transactions",
+  "uploads",
 ]);
 
 function createAuthAssertion(
@@ -124,12 +125,16 @@ async function proxyRequest(request: NextRequest, context: RouteContext) {
   if (contentType) headers.set("Content-Type", contentType);
 
   try {
-    const response = await fetch(target, {
+    const requestInit: RequestInit & { duplex?: "half" } = {
       method,
       headers,
-      body: method === "GET" ? undefined : await request.arrayBuffer(),
+      body: method === "GET" ? undefined : request.body,
       cache: "no-store",
-    });
+      signal: request.signal,
+    };
+    if (method !== "GET" && request.body) requestInit.duplex = "half";
+
+    const response = await fetch(target, requestInit);
     return new Response(response.body, {
       status: response.status,
       headers: {
@@ -148,3 +153,4 @@ async function proxyRequest(request: NextRequest, context: RouteContext) {
 
 export const GET = proxyRequest;
 export const PATCH = proxyRequest;
+export const POST = proxyRequest;
