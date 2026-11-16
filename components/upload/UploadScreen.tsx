@@ -32,8 +32,7 @@ import { uploadDataset, UploadApiError } from "@/lib/upload/upload-service";
 interface UploadScreenProps {
   userEmail?: string;
   userName?: string;
-  emailType?: "personal" | "work";
-  creditBalance?: number;
+  creditBalance: number;
   onLogout?: () => void;
 }
 
@@ -59,7 +58,6 @@ interface ProcessedFileCache {
 export function UploadScreen({
   userEmail,
   userName,
-  emailType,
   creditBalance,
   onLogout,
 }: UploadScreenProps) {
@@ -385,79 +383,86 @@ export function UploadScreen({
   );
 
   return (
-    <div className="flex h-dvh min-h-screen w-full flex-col bg-white text-[#191c1f] lg:min-h-0 lg:overflow-hidden">
+    <div
+      className={`flex w-full flex-col bg-app-canvas text-app-ink ${
+        hasSelectedFile
+          ? "min-h-screen lg:h-dvh lg:min-h-0 lg:overflow-hidden"
+          : "min-h-screen"
+      }`}
+    >
       <UploadHeader
         userEmail={userEmail}
         userName={userName}
-        emailType={emailType}
         creditBalance={creditBalance}
         onLogout={onLogout}
       />
 
-      <main className="mx-auto flex min-h-0 w-full max-w-340 flex-1 flex-col px-5 py-8 sm:px-8 sm:py-10 lg:overflow-hidden lg:px-10 lg:py-6">
+      <main
+        className={`mx-auto flex w-full max-w-[1320px] flex-1 flex-col px-4 py-8 sm:px-6 sm:py-10 lg:px-8 ${
+          hasSelectedFile ? "lg:min-h-0 lg:overflow-hidden lg:py-6" : ""
+        }`}
+      >
         <UploadTitleSection />
 
-        <div className={`grid min-h-0 flex-1 items-stretch gap-5 lg:gap-7 ${hasSelectedFile ? "lg:grid-cols-[.8fr_1.2fr]" : "lg:grid-cols-[1.05fr_.95fr]"}`}>
+        <div
+          className={`grid min-w-0 flex-1 items-stretch gap-5 lg:gap-6 ${
+            hasSelectedFile
+              ? "lg:min-h-0 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-rows-[minmax(0,1fr)]"
+              : ""
+          }`}
+        >
           {!hasSelectedFile && (
             <FileDropzone onFileSelected={handleFileSelected} disabled={isBusy} />
           )}
 
-          <section className="flex min-h-130 flex-col gap-6 rounded-[20px] border border-[#e2e2e7] bg-white p-5 sm:p-6 lg:min-h-0 lg:gap-4 lg:overflow-y-auto lg:p-5">
-            <h2 className="text-xl font-medium tracking-tight text-[#191c1f]">Dataset details</h2>
-            <UploadedFileCard data={parsedData} backendUpload={backendUpload} />
+          {hasSelectedFile && (
+            <section className="flex min-w-0 flex-col gap-5 rounded-2xl border border-app-line bg-app-surface p-4 sm:p-6 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain">
+              <h2 className="text-xl font-medium tracking-tight text-app-ink">File details</h2>
+              <UploadedFileCard data={parsedData} backendUpload={backendUpload} />
 
-            <FileValidationCard
-              items={validationItems}
-              isValidating={isBusy}
-              hasFile={hasSelectedFile}
-              error={errorMessage}
-            />
-            {!hasSelectedFile && <DataPreviewTable data={null} isLoading={false} />}
-            {hasSelectedFile && (
+              <FileValidationCard
+                items={validationItems}
+                isValidating={isBusy}
+                hasFile={hasSelectedFile}
+                error={errorMessage}
+              />
               <>
                 <SecurityInspectionPanel inspection={inspection} isInspecting={isBusy && !isUploading} />
                 {isUploading && (
                   <div
                     role="status"
                     aria-live="polite"
-                    className="rounded-xl border border-[#e2e2e7] bg-[#f4f4f4] p-3 text-xs text-[#505a63]"
+                    className="rounded-xl border border-app-line bg-app-canvas p-3 text-xs text-app-muted"
                   >
                     <div className="flex items-center justify-between gap-3">
                       <span className="font-medium text-[#191c1f]">
                         {uploadProgress < 100
                           ? `Uploading your file (${uploadProgress}%)…`
-                          : "Verifying file security & preparing your data preview…"}
-                      </span>
-                      <span className="text-[11px] font-semibold text-[#494fdf]">
-                        {uploadProgress < 100 ? "Transfer" : "Processing"}
+                          : "Preparing your preview…"}
                       </span>
                     </div>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#e2e2e7]">
+                    <div
+                      role="progressbar"
+                      aria-label="File upload progress"
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                      aria-valuenow={uploadProgress}
+                      className="mt-2 h-1.5 overflow-hidden rounded-full bg-app-line"
+                    >
                       {uploadProgress < 100 ? (
                         <div
-                          className="h-full rounded-full bg-[#494fdf] transition-[width] duration-150"
+                          className="h-full rounded-full bg-app-accent transition-[width] duration-150"
                           style={{ width: `${uploadProgress}%` }}
                         />
                       ) : (
-                        <div className="h-full w-full rounded-full bg-[#494fdf] animate-pulse" />
+                        <div className="h-full w-full rounded-full bg-app-accent" />
                       )}
                     </div>
-                    <p className="mt-1 text-[11px] text-[#5c5e60]">
+                    <p className="mt-1 text-[11px] text-app-muted">
                       {uploadProgress < 100
-                        ? "Streaming original file to secure quarantine..."
-                        : "Inspecting format, structure, security, and computing exact data row counts..."}
+                        ? "Uploading the original file."
+                        : "Checking the file and preparing its preview."}
                     </p>
-                  </div>
-                )}
-                {backendUpload && (
-                  <div className="flex items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3.5 py-2.5 text-xs text-emerald-800">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">Your preview is ready.</span>
-                      <span>({backendUpload.preview?.total_rows?.toLocaleString() ?? 0} data rows counted)</span>
-                    </div>
-                    <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700">
-                      Authoritative
-                    </span>
                   </div>
                 )}
                 {backendUpload && (
@@ -472,7 +477,7 @@ export function UploadScreen({
                         setBackendWarningsAcknowledged(event.target.checked)
                       }
                       disabled={isBusy}
-                      className="mt-1 accent-[#494fdf]"
+                      className="mt-1 accent-app-accent"
                     />
                     I reviewed the backend findings and want to continue.
                   </label>
@@ -509,19 +514,19 @@ export function UploadScreen({
                       checked={warningsAcknowledged}
                       onChange={(event) => setWarningsAcknowledged(event.target.checked)}
                       disabled={isBusy}
-                      className="mt-1 accent-[#494fdf]"
+                      className="mt-1 accent-app-accent"
                     />
                     I reviewed the inspection warnings and want to continue.
                   </label>
                 )}
               </>
-            )}
-          </section>
+            </section>
+          )}
 
           {hasSelectedFile && (
-            <section className="flex min-h-105 min-w-0 flex-col gap-4 rounded-[20px] border border-[#e2e2e7] bg-white p-5 sm:p-6 lg:min-h-0 lg:p-5">
+            <section className="flex min-w-0 flex-col gap-4 rounded-2xl border border-app-line bg-app-surface p-4 sm:p-6 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain">
               <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
-                <h2 className="text-xl font-medium tracking-tight text-[#191c1f]">Data preview</h2>
+                <h2 className="text-xl font-medium tracking-tight text-app-ink">Data preview</h2>
                 <div className="flex items-center gap-2">
                   <input
                     ref={fileInputRef}
@@ -535,7 +540,7 @@ export function UploadScreen({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isBusy}
-                    className="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-[#e2e2e7] px-4 text-sm font-semibold text-[#191c1f] transition-colors hover:bg-[#f4f4f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] disabled:cursor-wait disabled:opacity-60"
+                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#737b82] px-4 text-sm font-semibold text-app-ink transition-colors hover:bg-app-canvas active:bg-app-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Upload aria-hidden="true" className="h-4 w-4" />
                     Replace
@@ -546,7 +551,7 @@ export function UploadScreen({
                     disabled={isBusy}
                     aria-label="Remove uploaded file"
                     title="Remove uploaded file"
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#e2e2e7] text-[#5c5e60] transition-colors hover:bg-[#fff1f2] hover:text-[#e23b4a] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] disabled:cursor-wait disabled:opacity-60"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[#737b82] text-app-muted transition-colors hover:bg-[#fff1f2] hover:text-[#e23b4a] active:bg-[#ffe4e6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Trash2 aria-hidden="true" className="h-4 w-4" />
                   </button>
@@ -562,34 +567,31 @@ export function UploadScreen({
           )}
         </div>
 
-        <div className="mt-6 flex w-full flex-col-reverse items-stretch justify-between gap-4 sm:flex-row sm:items-center lg:mt-4">
-          <p className="text-xs leading-5 text-[#5c5e60]">
-            {backendUpload
-              ? "Backend preview is ready. Review your columns and click Continue to proceed to schema mapping."
-              : "Next step: Securely upload this inspected file before continuing."}
-          </p>
-          <button
-            type="button"
-            onClick={() => void handleContinueToMapping()}
-            disabled={!isContinueButtonEnabled}
-            className={`inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-7 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] sm:w-auto ${
-              isContinueButtonEnabled
-                ? "cursor-pointer bg-black text-white hover:bg-[#191c1f]"
-                : "cursor-not-allowed border border-[#e2e2e7] bg-[#f4f4f4] text-[#8d969e]"
-            }`}
-          >
-            <span>
-              {isUploading
-                ? uploadProgress < 100
-                  ? `Uploading ${uploadProgress}%`
-                  : "Validating upload…"
-                : backendUpload
-                  ? "Continue to mapping"
-                  : "Upload and validate"}
-            </span>
-            <ArrowRight aria-hidden="true" className="h-4 w-4" />
-          </button>
-        </div>
+        {hasSelectedFile && (
+          <div className="mt-6 flex w-full justify-end lg:mt-4 lg:shrink-0">
+            <button
+              type="button"
+              onClick={() => void handleContinueToMapping()}
+              disabled={!isContinueButtonEnabled}
+              className={`inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-7 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent sm:w-auto ${
+                isContinueButtonEnabled
+                  ? "cursor-pointer bg-app-accent text-white hover:bg-app-accent-strong active:bg-[#204d9c]"
+                  : "cursor-not-allowed border border-app-line bg-app-canvas text-app-muted"
+              }`}
+            >
+              <span>
+                {isUploading
+                  ? uploadProgress < 100
+                    ? `Uploading ${uploadProgress}%`
+                    : "Validating upload…"
+                  : backendUpload
+                    ? "Continue to mapping"
+                    : "Upload and validate"}
+              </span>
+              <ArrowRight aria-hidden="true" className="h-4 w-4" />
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );

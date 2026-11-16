@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Building2, CheckCircle2, Coins, UploadCloud } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { ApiError, getCurrentUser } from "@/lib/api";
 import { UserProfile } from "@/types/auth";
@@ -57,9 +56,9 @@ export default function DashboardPage() {
 
   if (isPending || (session && !profile && !pageError)) {
     return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-white">
-        <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-[#494fdf] border-t-transparent" />
-        <p className="text-sm text-[#505a63]">Loading your dashboard...</p>
+      <div className="flex min-h-screen w-full flex-col items-center justify-center gap-3 bg-app-canvas">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-app-accent border-t-transparent" />
+        <p role="status" className="text-sm text-app-muted">Loading your workspace…</p>
       </div>
     );
   }
@@ -68,7 +67,7 @@ export default function DashboardPage() {
 
   if (pageError || !profile) {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-white px-6 text-center">
+      <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-app-canvas px-6 text-center">
         <p role="alert" className="max-w-md text-sm leading-6 text-[#8b0000]">
           {pageError || "Unable to load your dashboard."}
         </p>
@@ -79,7 +78,7 @@ export default function DashboardPage() {
             setPageError(null);
             setRetryCount((count) => count + 1);
           }}
-          className="flex h-12 items-center justify-center rounded-full bg-black px-6 text-sm font-semibold text-white transition-colors hover:bg-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
+          className="flex min-h-11 items-center justify-center rounded-lg bg-app-ink px-6 text-sm font-semibold text-white transition-colors hover:bg-[#30363b] active:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
         >
           Retry
         </button>
@@ -90,90 +89,58 @@ export default function DashboardPage() {
   const firstName = profile.full_name?.trim().split(/\s+/)[0] || "there";
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-white text-[#191c1f]">
+    <div className="flex min-h-screen w-full flex-col bg-app-canvas text-app-ink">
       <UploadHeader
-        sectionLabel="Dashboard"
         userEmail={profile.email}
         userName={profile.full_name || undefined}
-        emailType={profile.email_type}
         creditBalance={profile.credit_balance}
         onLogout={handleLogout}
       />
 
-      <main className="mx-auto w-full max-w-[1200px] flex-1 px-5 py-10 sm:px-8 sm:py-14 lg:px-10">
-        <div className="mb-8">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-[#5c5e60]">
-            Workspace overview
-          </p>
-          <h1 className="text-[36px] font-medium leading-[1.05] tracking-[-0.04em] sm:text-[48px]">
+      <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+        <div className="mb-8 sm:mb-10">
+          <h1 className="text-3xl font-medium leading-tight tracking-tight sm:text-4xl">
             Welcome back, {firstName}.
           </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-[#505a63] sm:text-base">
-            Your facility workspace is ready. Here&apos;s your account at a glance.
-          </p>
         </div>
 
-        <div className="grid gap-5 lg:grid-cols-[1.05fr_.95fr]">
-          <section className="rounded-[20px] bg-black p-6 text-white sm:p-8">
-            <div className="flex items-center gap-3 text-white/65">
-              <Coins aria-hidden="true" className="h-5 w-5" />
-              <h2 className="text-sm font-semibold">Available credits</h2>
-            </div>
-            <p className="mt-6 text-5xl font-medium tracking-tight">
-              {profile.credit_balance}
-              <span className="ml-2 text-base font-normal text-white/65">credits</span>
+        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)] lg:gap-14">
+          <section className="rounded-2xl border border-app-line bg-app-surface p-6 sm:p-8">
+            <h2 className="text-2xl font-medium tracking-tight">Upload facility data</h2>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-app-muted">
+              Choose a CSV or Excel file to map facility and work-order fields.
             </p>
-            <p className="mt-4 text-sm text-white/65">
-              Credits are available for your Xempla workspace.
-            </p>
+            <button
+              type="button"
+              onClick={() => router.push("/upload")}
+              className="mt-6 inline-flex min-h-12 items-center justify-center rounded-lg bg-app-accent px-6 text-sm font-semibold text-white transition-colors hover:bg-app-accent-strong active:bg-[#204d9c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
+            >
+              Choose a file
+            </button>
           </section>
 
-          <section className="rounded-[20px] border border-[#e2e2e7] bg-white p-6 sm:p-8">
-            <h2 className="text-xl font-medium tracking-tight">Account details</h2>
-            <dl className="mt-5 divide-y divide-[#e2e2e7] text-sm">
-              <div className="flex items-center justify-between gap-4 py-4">
-                <dt className="text-[#5c5e60]">Email</dt>
-                <dd className="break-all text-right font-medium">{profile.email}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-4 py-4">
-                <dt className="text-[#5c5e60]">Account type</dt>
-                <dd className="inline-flex items-center gap-2 font-medium capitalize">
-                  <Building2 aria-hidden="true" className="h-4 w-4 text-[#494fdf]" />
-                  {profile.email_type}
+          <section>
+            <h2 className="text-sm font-semibold text-app-muted">Account details</h2>
+            <dl className="mt-3 space-y-3 text-sm">
+              <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4 lg:flex-col lg:gap-1">
+                <dt className="text-app-muted">Email</dt>
+                <dd className="break-all font-medium text-app-ink sm:text-right lg:text-left">
+                  {profile.email}
                 </dd>
               </div>
-              <div className="flex items-center justify-between gap-4 py-4">
-                <dt className="text-[#5c5e60]">Email status</dt>
-                <dd className="inline-flex items-center gap-2 font-medium text-[#006400]">
-                  <CheckCircle2 aria-hidden="true" className="h-4 w-4" />
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-app-muted">Account type</dt>
+                <dd className="font-medium capitalize text-app-ink">{profile.email_type}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-app-muted">Email status</dt>
+                <dd className="font-medium text-app-ink">
                   {profile.is_verified ? "Verified" : "Unverified"}
                 </dd>
               </div>
             </dl>
           </section>
         </div>
-
-        <section className="mt-5 flex flex-col gap-6 rounded-[20px] border border-[#e2e2e7] bg-[#f4f4f4] p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
-          <div className="flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white text-[#191c1f]">
-              <UploadCloud aria-hidden="true" className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="text-xl font-medium tracking-tight">Start with your facility data</h2>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-[#505a63]">
-                Upload a CSV or Excel file to begin mapping your facility information.
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => router.push("/upload")}
-            className="flex h-12 shrink-0 items-center justify-center gap-2 rounded-full bg-black px-6 text-sm font-semibold text-white transition-colors hover:bg-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
-          >
-            Continue to upload
-            <ArrowRight aria-hidden="true" className="h-4 w-4" />
-          </button>
-        </section>
       </main>
     </div>
   );

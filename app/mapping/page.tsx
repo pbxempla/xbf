@@ -3,8 +3,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CheckCircle2, Database } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { MappingFieldCombobox } from "@/components/mapping/MappingFieldCombobox";
 import { UploadHeader } from "@/components/upload/UploadHeader";
+import { UploadTitleSection } from "@/components/upload/UploadTitleSection";
 import { authClient } from "@/lib/auth-client";
 import { ApiError, getCurrentUser } from "@/lib/api";
 import {
@@ -63,6 +65,7 @@ export default function MappingPage() {
   const { data: session, isPending } = authClient.useSession();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
+  const [profileRetryCount, setProfileRetryCount] = useState(0);
   const [mappingError, setMappingError] = useState<string | null>(null);
   const [dataset] = useState<CachedDatasetInfo | null>(() => {
     if (typeof window === "undefined") return null;
@@ -76,6 +79,7 @@ export default function MappingPage() {
   const [isLoadingMapping, setIsLoadingMapping] = useState(
     Boolean(dataset?.backendUploadId),
   );
+  const [mappingRetryCount, setMappingRetryCount] = useState(0);
   const [proposal, setProposal] = useState<MappingProposal | null>(null);
   const [fieldSelections, setFieldSelections] = useState<FieldSelections | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
@@ -115,7 +119,7 @@ export default function MappingPage() {
     return () => {
       active = false;
     };
-  }, [isPending, session, router]);
+  }, [isPending, profileRetryCount, session, router]);
 
   useEffect(() => {
     const uploadId = dataset?.backendUploadId;
@@ -124,6 +128,7 @@ export default function MappingPage() {
     prepareMapping(uploadId)
       .then((nextProposal) => {
         if (!active) return;
+        setMappingError(null);
         setProposal(nextProposal);
         setFieldSelections(selectionsFromProposal(nextProposal));
       })
@@ -138,7 +143,7 @@ export default function MappingPage() {
     return () => {
       active = false;
     };
-  }, [dataset?.backendUploadId, isPending, session]);
+  }, [dataset?.backendUploadId, isPending, mappingRetryCount, session]);
 
   const aiEligibleFields = useMemo(
     () =>
@@ -300,90 +305,114 @@ export default function MappingPage() {
     }
   };
 
+  const handleColumnSelection = (
+    sourceColumnId: string,
+    currentField: CanonicalWorkOrderField | undefined,
+    value: CanonicalWorkOrderField | null,
+  ) => {
+    const selected = value;
+    setFieldSelections((current) => {
+      if (!current) return current;
+      const next = { ...current };
+      for (const field of CANONICAL_WORK_ORDER_FIELDS) {
+        if (next[field] === sourceColumnId) next[field] = null;
+      }
+      if (selected) next[selected] = sourceColumnId;
+      return next;
+    });
+    setJevSuggestions((current) => {
+      if (!selected && !currentField) return current;
+      const next = new Map(current);
+      if (currentField) next.delete(currentField);
+      if (selected) next.delete(selected);
+      return next;
+    });
+  };
+
   if (isPending || (session && !profile && !pageError)) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-[#F5F6FE]">
-        <div className="w-8 h-8 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="flex min-h-screen w-full flex-col items-center justify-center gap-3 bg-app-canvas">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-app-accent border-t-transparent" />
+        <p role="status" className="text-sm text-app-muted">Loading mapping workspace…</p>
       </div>
     );
   }
   if (!session) return null;
   if (pageError) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F5F6FE] px-6 text-center">
-        <p role="alert" className="text-sm text-red-700">{pageError}</p>
-      </div>
+      <main className="flex min-h-screen flex-col items-center justify-center gap-5 bg-app-canvas px-6 text-center">
+        <p role="alert" className="max-w-md text-sm leading-6 text-[#8b0000]">{pageError}</p>
+        <button
+          type="button"
+          onClick={() => {
+            setPageError(null);
+            setProfileRetryCount((count) => count + 1);
+          }}
+          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-app-ink px-5 text-sm font-semibold text-white transition-colors hover:bg-[#30363b] active:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
+        >
+          Retry
+        </button>
+      </main>
     );
   }
   if (!profile) return null;
 
   return (
-    <div className="min-h-screen w-full bg-linear-to-b from-[#F5F6FE] via-[#EDF0FE] to-[#F5F7FF] flex flex-col">
+    <div className="flex min-h-screen w-full flex-col bg-app-canvas text-app-ink">
       <UploadHeader
         userEmail={profile.email}
         userName={profile.full_name || undefined}
-        emailType={profile.email_type}
         creditBalance={profile.credit_balance}
         onLogout={handleLogout}
       />
-      <main className="w-full px-6 sm:px-8 lg:px-12 py-8 flex flex-col flex-1">
-        <div className="mb-6 flex items-center gap-3">
-          <Link
-            href="/upload"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-white border border-indigo-100 rounded-lg px-3 py-1.5 shadow-2xs transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Back to Upload</span>
-          </Link>
-        </div>
+      <main className="mx-auto flex w-full max-w-[1320px] flex-1 flex-col px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+        <UploadTitleSection
+          currentStep="mapping"
+          title="Map work-order columns"
+          description="Facility ID and work order ID are required."
+        />
 
-        <div className="w-full bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-slate-100/90 flex flex-col gap-6">
-          <div>
-            <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">
-              Stage 2 • Schema Mapping
-            </span>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] mt-1">
-              Map work-order data
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1">
-              Confirm how the CSV columns map to the canonical work-order fields. Required fields are marked; optional fields can remain unmapped.
-            </p>
-          </div>
-
-          {!dataset?.backendUploadId ? (
-            <div className="p-8 text-center text-slate-500 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
-              <p className="text-sm">No uploaded dataset is available in this browser session.</p>
-              <Link href="/upload" className="mt-3 inline-block text-sm font-semibold text-indigo-600">
-                Go to Upload
+        {!dataset?.backendUploadId ? (
+          <div className="rounded-2xl border border-dashed border-app-line bg-app-surface p-8 text-center">
+              <p className="text-sm text-app-muted">Upload a file to start mapping its columns.</p>
+              <Link
+                href="/upload"
+                className="mt-4 inline-flex min-h-11 items-center justify-center rounded-lg bg-app-accent px-5 text-sm font-semibold text-white transition-colors hover:bg-app-accent-strong active:bg-[#204d9c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
+              >
+                Upload a file
               </Link>
+          </div>
+        ) : (
+          <section className="flex flex-col gap-6 rounded-2xl border border-app-line bg-app-surface p-4 sm:p-6">
+            <div className="flex min-w-0 flex-col gap-1 border-b border-app-line pb-4 sm:flex-row sm:items-baseline sm:justify-between">
+              <h2 title={dataset.fileName} className="truncate text-sm font-semibold text-app-ink">
+                {dataset.fileName}
+              </h2>
+              <p className="text-xs text-app-muted">
+                {dataset.formattedSize} · {dataset.rowCount.toLocaleString()} rows · {dataset.columnCount} columns
+              </p>
             </div>
-          ) : (
-            <>
-              <div className="p-4 rounded-2xl bg-indigo-50/60 border border-indigo-100 flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
-                    <Database className="w-5 h-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-sm font-bold text-slate-900">{dataset.fileName}</h2>
-                    <p className="text-xs text-slate-500">
-                      {dataset.formattedSize} • {dataset.rowCount.toLocaleString()} rows • {dataset.columnCount} columns
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1 text-emerald-600 text-xs font-semibold bg-emerald-50 border border-emerald-100 px-3 py-1 rounded-full">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  Quarantined
-                </div>
-              </div>
 
               {isLoadingMapping && (
-                <p role="status" className="text-sm text-slate-500">Profiling the CSV and preparing deterministic suggestions…</p>
+                <p role="status" className="text-sm text-app-muted">Preparing column matches…</p>
               )}
               {mappingError && (
-                <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
-                  {mappingError}
-                </p>
+                <div role="alert" className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+                  <p>{mappingError}</p>
+                  {!proposal && dataset.backendUploadId && !isLoadingMapping && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMappingError(null);
+                        setIsLoadingMapping(true);
+                        setMappingRetryCount((count) => count + 1);
+                      }}
+                      className="min-h-11 rounded-lg border border-red-300 bg-white px-4 font-semibold text-red-800 transition-colors hover:bg-red-100 active:bg-red-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-700"
+                    >
+                      Retry mapping
+                    </button>
+                  )}
+                </div>
               )}
 
               {proposal && fieldSelections && (
@@ -391,55 +420,52 @@ export default function MappingPage() {
                   <div className="flex flex-col gap-3">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
-                        <h2 className="text-sm font-bold text-slate-800">Source column mapping</h2>
-                        <p className="text-xs text-slate-500">
-                          {proposal.total_rows.toLocaleString()} CSV rows • schema {proposal.schema_version} • delimiter {proposal.delimiter === "\t" ? "tab" : proposal.delimiter}
-                        </p>
+                        <h2 className="text-2xl font-semibold text-app-ink">Match columns</h2>
                       </div>
                       <button
                         type="button"
                         onClick={handleJevSuggestions}
                         disabled={isSuggesting || aiEligibleFields.length === 0}
-                        className="rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2 text-xs font-semibold text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="min-h-11 rounded-lg border border-[#737b82] bg-white px-4 text-sm font-semibold text-app-ink transition-colors hover:bg-app-canvas active:bg-app-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        {isSuggesting ? "Asking OpenRouter Jev…" : "Retry unresolved fields with Jev"}
+                        {isSuggesting
+                          ? "Finding matches…"
+                          : jevAttempted
+                            ? "Try suggestions again"
+                            : "Suggest matches"}
                       </button>
                     </div>
-                    <p className="text-xs leading-5 text-slate-500">
-                      Source columns stay fixed on the left; choose a canonical field in the middle. Rules run first.                       When rules leave unresolved or ambiguous fields, OpenRouter Jev automatically suggests mappings for those fields only. Column names and up to three short sample values are sent, with email addresses and phone-like values redacted. You can retry suggestions, and must review every suggestion before confirming.
+                    <p className="text-xs leading-5 text-app-muted">
+                      Column names and up to three sample values are sent to OpenRouter for suggestions.
+                      {" "}Email addresses and phone numbers in samples are redacted first.
                     </p>
-                    <p role="status" className="text-xs text-slate-600">
-                      Automatic rule matches:{" "}
-                      {proposal.mappings.filter(
-                        (mapping) =>
-                          mapping.source_column_id !== null &&
-                          mapping.method !== "unmapped",
-                      ).length}
-                      {" · "}
-                      OpenRouter decision layer:{" "}
+                    <p role="status" className="text-xs text-app-muted">
                       {jevSuggestions.size > 0
-                        ? `${jevSuggestions.size} suggestion(s) returned; review required`
+                        ? "Suggestions are ready. Review each match before continuing."
                         : isSuggesting
-                          ? "request in progress"
+                          ? "Finding matches for unmatched columns..."
                           : jevAttempted
-                            ? "no usable suggestions returned; review the message above"
+                            ? "No suggestions were available. Choose fields manually."
                             : aiEligibleFields.length > 0
-                              ? `${aiEligibleFields.length} unresolved field(s); not called yet`
-                              : "not needed; no unresolved required or ambiguous fields"}
+                              ? "Suggestions are available for unmatched columns."
+                              : "No further suggestions are needed."}
                     </p>
-                    <div className="overflow-x-auto rounded-xl border border-slate-200">
-                      <table className="w-full min-w-[760px] text-left text-xs">
-                        <thead className="bg-slate-50 text-slate-600">
+                    <div className="hidden overflow-x-auto rounded-xl border border-app-line lg:block">
+                      <table className="w-full min-w-[880px] text-left text-sm">
+                        <thead className="bg-app-canvas text-app-muted">
                           <tr>
-                            <th className="sticky left-0 z-20 bg-slate-50 px-4 py-3 font-semibold">
-                              Source (CSV column)
+                            <th className="sticky left-0 z-20 bg-app-canvas px-4 py-3 font-semibold">
+                              Your column
                             </th>
-                            <th className="px-4 py-3 font-semibold">Canonical field</th>
-                            <th className="px-4 py-3 font-semibold">Mapping decision</th>
+                            <th className="px-4 py-3 font-semibold">Work-order field</th>
+                            <th className="px-4 py-3 font-semibold">Match</th>
                           </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-app-line">
                           {proposal.columns.map((column) => {
+                            const sampleValues = column.sample_values.filter(
+                              (value): value is string => Boolean(value?.trim()),
+                            );
                             const selectedFields = CANONICAL_WORK_ORDER_FIELDS.filter(
                               (field) => fieldSelections[field] === column.source_column_id,
                             );
@@ -459,86 +485,67 @@ export default function MappingPage() {
                             );
                             return (
                               <tr key={column.source_column_id}>
-                                <td className="sticky left-0 z-10 bg-white px-4 py-3 align-top font-medium text-slate-800">
-                                  <span className="block">
-                                    {column.index + 1}. {column.name || "(blank header)"}
-                                  </span>
-                                  <span className="mt-1 block text-[10px] text-slate-500">
-                                    Type: {column.detected_type}
-                                  </span>
-                                  <span className="mt-1 block font-normal text-slate-500">
-                                    {column.sample_values.filter(Boolean).join(" · ") || "No sample values"}
-                                  </span>
+                                <td className="sticky left-0 z-10 min-w-[280px] bg-white px-4 py-3 align-top text-app-ink">
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <span className="text-sm font-semibold">
+                                      {column.index + 1}. {column.name || "(blank header)"}
+                                    </span>
+                                    <span className="shrink-0 rounded-full bg-app-canvas px-2.5 py-1 text-xs font-medium text-app-muted">
+                                      {column.detected_type}
+                                    </span>
+                                  </div>
+                                  <div className="mt-2 flex flex-wrap gap-1.5">
+                                    {sampleValues.length > 0 ? (
+                                      sampleValues.map((sample, index) => (
+                                        <span
+                                          key={`${column.source_column_id}-sample-${index}`}
+                                          className="max-w-full break-all rounded-md border border-app-line bg-app-canvas px-2 py-1 text-sm font-normal text-app-ink"
+                                        >
+                                          {sample}
+                                        </span>
+                                      ))
+                                    ) : (
+                                      <span className="text-sm font-normal text-app-muted">
+                                        No sample values
+                                      </span>
+                                    )}
+                                  </div>
                                 </td>
                                 <td className="px-4 py-3 align-top">
-                                  <select
-                                    aria-label={`Canonical field for source column ${column.name || column.index + 1}`}
-                                    value={selectedField ?? ""}
+                                  <MappingFieldCombobox
+                                    id={`desktop-map-${column.source_column_id}`}
+                                    label={`Work-order field for ${column.name || `column ${column.index + 1}`}`}
+                                    value={selectedField ?? null}
                                     disabled={isSuggesting}
-                                    onChange={(event) => {
-                                      const selected = CANONICAL_WORK_ORDER_FIELDS.find(
-                                        (field) => field === event.target.value,
-                                      ) ?? null;
-                                      setFieldSelections((current) => {
-                                        if (!current) return current;
-                                        const next = { ...current };
-                                        for (const field of CANONICAL_WORK_ORDER_FIELDS) {
-                                          if (next[field] === column.source_column_id) {
-                                            next[field] = null;
-                                          }
-                                        }
-                                        if (selected) {
-                                          next[selected] = column.source_column_id;
-                                        }
-                                        return next;
-                                      });
-                                      setJevSuggestions((current) => {
-                                        if (!selected && !selectedField) return current;
-                                        const next = new Map(current);
-                                        if (selectedField) next.delete(selectedField);
-                                        if (selected) next.delete(selected);
-                                        return next;
-                                      });
-                                    }}
-                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-slate-700"
-                                  >
-                                    <option value="">Not mapped</option>
-                                    {CANONICAL_WORK_ORDER_FIELDS.map((field) => (
-                                      <option key={field} value={field}>
-                                        {CANONICAL_FIELD_LABELS[field]}
-                                        {field === "facility_id" || field === "wo_id" ? " (required)" : ""}
-                                      </option>
-                                    ))}
-                                  </select>
+                                    onChange={(field) =>
+                                      handleColumnSelection(
+                                        column.source_column_id,
+                                        selectedField,
+                                        field,
+                                      )
+                                    }
+                                  />
                                 </td>
-                                <td className="px-4 py-3 align-top text-slate-500">
+                                <td className="px-4 py-3 align-top text-app-muted">
                                   {selectedFields.length > 1 ? (
                                     <span className="font-semibold text-red-700">
-                                      Conflict: multiple fields share this source —{" "}
+                                      More than one field uses this column:{" "}
                                       {selectedFields
                                         .map((field) => CANONICAL_FIELD_LABELS[field])
                                         .join(", ")}
                                     </span>
                                   ) : isJevSelection ? (
-                                    <span>
-                                      Jev suggestion · {Math.round(jevSuggestion.confidence * 100)}% confidence · review required
-                                    </span>
+                                    <span>Suggested match. Review before continuing.</span>
                                   ) : mapping?.source_column_id === column.source_column_id ? (
-                                    <span>
-                                      Automatic rule: {mapping.method}
-                                      {mapping.confidence !== null
-                                        ? ` · ${Math.round(mapping.confidence * 100)}% confidence`
-                                        : ""}
-                                    </span>
+                                    <span>Matched automatically</span>
                                   ) : selectedField ? (
-                                    <span>Manual selection: {CANONICAL_FIELD_LABELS[selectedField]}</span>
+                                    <span>Selected manually</span>
                                   ) : candidateFields.length > 0 ? (
                                     <span>
-                                      Candidate for{" "}
+                                      Possible match:{" "}
                                       {candidateFields
                                         .map((candidate) => CANONICAL_FIELD_LABELS[candidate.target])
-                                        .join(", ")}{" "}
-                                      · review needed
+                                        .join(", ")}
                                     </span>
                                   ) : (
                                     <span>Not mapped</span>
@@ -550,29 +557,119 @@ export default function MappingPage() {
                         </tbody>
                       </table>
                     </div>
-                    <div className="flex flex-wrap gap-2 text-xs text-slate-500">
-                      {proposal.columns.map((column) => (
-                        <span key={column.source_column_id} className="rounded-lg bg-slate-100 px-2.5 py-1.5">
-                          {column.index + 1}. {column.name} <span className="text-indigo-700">{column.detected_type}</span>
-                        </span>
-                      ))}
+                    <div className="grid gap-3 lg:hidden">
+                      {proposal.columns.map((column) => {
+                        const sampleValues = column.sample_values.filter(
+                          (value): value is string => Boolean(value?.trim()),
+                        );
+                        const selectedFields = CANONICAL_WORK_ORDER_FIELDS.filter(
+                          (field) => fieldSelections[field] === column.source_column_id,
+                        );
+                        const selectedField = selectedFields[0];
+                        const mapping = proposal.mappings.find(
+                          (item) => item.target === selectedField,
+                        );
+                        const suggestion = selectedField
+                          ? jevSuggestions.get(selectedField)
+                          : undefined;
+                        const candidateFields = proposal.mappings.filter(
+                          (item) =>
+                            item.source_column_id === null &&
+                            item.candidate_source_column_ids.includes(column.source_column_id),
+                        );
+                        return (
+                          <article
+                            key={column.source_column_id}
+                            className="min-w-0 rounded-xl border border-app-line bg-white p-4"
+                          >
+                            <div className="flex min-w-0 flex-wrap items-center gap-2">
+                              <h3 className="break-words text-sm font-semibold text-app-ink">
+                                {column.index + 1}. {column.name || "(blank header)"}
+                              </h3>
+                              <span className="shrink-0 rounded-full bg-app-canvas px-2.5 py-1 text-xs font-medium text-app-muted">
+                                {column.detected_type}
+                              </span>
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                              {sampleValues.length > 0 ? (
+                                sampleValues.map((sample, index) => (
+                                  <span
+                                    key={`${column.source_column_id}-sample-${index}`}
+                                    className="max-w-full break-all rounded-md border border-app-line bg-app-canvas px-2 py-1 text-sm text-app-ink"
+                                  >
+                                    {sample}
+                                  </span>
+                                ))
+                              ) : (
+                                <span className="text-sm text-app-muted">No sample values</span>
+                              )}
+                            </div>
+                            <label
+                              htmlFor={`mobile-map-${column.source_column_id}`}
+                              className="mt-4 block text-sm font-medium text-app-ink"
+                            >
+                              Work-order field
+                            </label>
+                            <MappingFieldCombobox
+                              id={`mobile-map-${column.source_column_id}`}
+                              label={`Work-order field for ${column.name || `column ${column.index + 1}`}`}
+                              value={selectedField ?? null}
+                              className="mt-2"
+                              disabled={isSuggesting}
+                              onChange={(field) =>
+                                handleColumnSelection(
+                                  column.source_column_id,
+                                  selectedField,
+                                  field,
+                                )
+                              }
+                            />
+                            <p className="mt-3 text-xs text-app-muted">
+                              {selectedFields.length > 1
+                                ? `More than one field uses this column: ${selectedFields
+                                    .map((field) => CANONICAL_FIELD_LABELS[field])
+                                    .join(", ")}`
+                                : suggestion?.source_column_id === column.source_column_id
+                                  ? "Suggested match. Review before continuing."
+                                  : mapping?.source_column_id === column.source_column_id
+                                    ? "Matched automatically"
+                                    : selectedField
+                                      ? "Selected manually"
+                                      : candidateFields.length > 0
+                                        ? `Possible match: ${candidateFields
+                                            .map((candidate) => CANONICAL_FIELD_LABELS[candidate.target])
+                                            .join(", ")}`
+                                        : "Not mapped"}
+                            </p>
+                          </article>
+                        );
+                      })}
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={handleConfirmMapping}
-                    disabled={isConfirming || isSuggesting || isLoadingMapping}
-                    className="self-start rounded-full bg-black px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#191c1f] disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {isConfirming ? "Extracting and validating…" : "Confirm mapping and extract"}
-                  </button>
+                  <div className="flex flex-col gap-3 border-t border-app-line pt-4 sm:flex-row sm:items-center sm:justify-end">
+                    <Link
+                      href="/upload"
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#737b82] bg-white px-5 text-sm font-semibold text-app-ink transition-colors hover:bg-app-canvas active:bg-app-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
+                    >
+                      <ArrowLeft aria-hidden="true" className="h-4 w-4" />
+                      Back to upload
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={handleConfirmMapping}
+                      disabled={isConfirming || isSuggesting || isLoadingMapping}
+                      className="min-h-11 rounded-lg bg-app-accent px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-app-accent-strong active:bg-[#204d9c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isConfirming ? "Extracting and validating…" : "Confirm mapping and extract"}
+                    </button>
+                  </div>
                 </>
               )}
 
               {importResult && (
-                <section className="rounded-2xl border border-slate-200 p-5">
-                  <h2 className="text-sm font-bold text-slate-900">Import validation</h2>
-                  <p className="mt-2 text-sm text-slate-600">
+                <section className="rounded-xl border border-app-line bg-app-canvas p-4 sm:p-5">
+                  <h2 className="text-sm font-bold text-app-ink">Import validation</h2>
+                  <p className="mt-2 text-sm text-app-muted">
                     {importResult.valid_rows.toLocaleString()} valid · {importResult.invalid_rows.toLocaleString()} invalid · {importResult.total_rows.toLocaleString()} total
                   </p>
                   {importResult.error_preview.length > 0 && (
@@ -591,21 +688,20 @@ export default function MappingPage() {
                       type="button"
                       onClick={handleSubmitAnalytics}
                       disabled={isSubmitting}
-                      className="mt-4 rounded-full bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+                      className="mt-4 min-h-11 rounded-lg bg-app-accent px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-app-accent-strong active:bg-[#204d9c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {isSubmitting ? "Submitting…" : "Submit valid work orders"}
                     </button>
                   )}
                   {analyticsResult && (
-                    <p role="status" className="mt-3 text-sm text-slate-600">
+                    <p role="status" className="mt-3 text-sm text-app-muted">
                       {analyticsResult.message} ({analyticsResult.submitted} submitted, {analyticsResult.failed} failed)
                     </p>
                   )}
                 </section>
               )}
-            </>
+          </section>
           )}
-        </div>
       </main>
     </div>
   );

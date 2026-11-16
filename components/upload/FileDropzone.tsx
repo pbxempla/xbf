@@ -44,10 +44,6 @@ export function FileDropzone({ onFileSelected, disabled }: FileDropzoneProps) {
     event.target.value = "";
   };
 
-  const triggerBrowse = () => {
-    if (!disabled) fileInputRef.current?.click();
-  };
-
   return (
     <div
       role="region"
@@ -56,12 +52,11 @@ export function FileDropzone({ onFileSelected, disabled }: FileDropzoneProps) {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      onClick={triggerBrowse}
-      className={`flex min-h-[340px] flex-1 cursor-pointer flex-col items-center justify-center rounded-[20px] border border-dashed px-5 py-10 text-center transition-colors sm:min-h-[380px] lg:min-h-0 lg:py-6 ${
+      className={`flex min-h-[280px] flex-1 flex-col items-center justify-center rounded-[20px] border border-dashed px-5 py-8 text-center transition-colors sm:min-h-[320px] lg:min-h-[360px] lg:py-10 ${
         isDragOver
-          ? "border-[#494fdf] bg-[#f4f4f4] ring-2 ring-[#494fdf]/15"
-          : "border-[#c9c9cd] bg-white hover:border-[#191c1f] hover:bg-[#f4f4f4]"
-      } ${disabled ? "cursor-wait opacity-60" : ""}`}
+          ? "border-app-accent bg-app-accent-wash ring-2 ring-app-accent/15"
+          : "border-[#737b82] bg-app-surface hover:border-app-ink hover:bg-app-canvas"
+      } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
     >
       <input
         ref={fileInputRef}
@@ -72,23 +67,20 @@ export function FileDropzone({ onFileSelected, disabled }: FileDropzoneProps) {
         disabled={disabled}
       />
 
-      <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-[#f4f4f4] text-[#191c1f]">
+      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-xl bg-app-canvas text-app-ink">
         <UploadCloud aria-hidden="true" className="h-7 w-7 stroke-[1.6]" />
       </div>
 
-      <h2 className="text-xl font-medium tracking-tight text-[#191c1f] sm:text-2xl">
-        Drop your file here
+      <h2 className="text-xl font-medium tracking-tight text-app-ink sm:text-2xl">
+        Choose a facility data file
       </h2>
-      <p className="mt-2 text-sm text-[#505a63]">or choose one from your device</p>
+      <p className="mt-2 text-sm text-app-muted">Drop it here, or browse your device.</p>
 
       <button
         type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          triggerBrowse();
-        }}
+        onClick={() => fileInputRef.current?.click()}
         disabled={disabled}
-        className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-black px-6 text-sm font-semibold text-white transition-colors hover:bg-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] disabled:cursor-not-allowed disabled:opacity-60"
+        className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-app-ink px-6 text-sm font-semibold text-white transition-colors hover:bg-[#30363b] active:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:bg-app-muted"
       >
         <FolderOpen aria-hidden="true" className="h-4 w-4" />
         Browse files
@@ -98,12 +90,12 @@ export function FileDropzone({ onFileSelected, disabled }: FileDropzoneProps) {
         {UPLOAD_SECURITY_CONFIG.allowedExtensions.map((extension) => (
           <span
             key={extension}
-            className="rounded-full border border-[#e2e2e7] px-3 py-1.5 font-medium text-[#3a3d40]"
+            className="rounded-md border border-app-line bg-app-canvas px-3 py-1.5 font-medium text-app-ink"
           >
             {extension.toUpperCase()}
           </span>
         ))}
-        <span className="px-1 text-[#8d969e]">
+        <span className="px-1 text-app-muted">
           Up to {UPLOAD_SECURITY_CONFIG.maxFileSizeMb} MB
         </span>
       </div>

@@ -17,7 +17,7 @@ export function BackendUploadResultPanel({ upload }: BackendUploadResultPanelPro
 
   return (
     <section
-      aria-labelledby="backend-validation-heading"
+      aria-labelledby="file-validation-heading"
       className={`rounded-xl border p-3 ${
         isWarning
           ? "border-amber-200 bg-amber-50 text-amber-900"
@@ -30,13 +30,12 @@ export function BackendUploadResultPanel({ upload }: BackendUploadResultPanelPro
         ) : (
           <Check aria-hidden="true" className="h-4 w-4 shrink-0" />
         )}
-        <h3 id="backend-validation-heading" className="text-sm font-semibold">
-          Backend validation {isWarning ? "accepted with warnings" : "passed"}
+        <h3 id="file-validation-heading" className="text-sm font-semibold">
+          File validation {isWarning ? "accepted with warnings" : "passed"}
         </h3>
       </div>
       <p className="mt-1 text-xs leading-5">
-        The backend accepted this file into private quarantine. This is format
-        validation, not antivirus scanning.
+        The file is held in private quarantine. These checks cover file format, not viruses.
       </p>
       {visibleFindings.length > 0 && (
         <ul className="mt-2 list-inside list-disc space-y-1 text-xs leading-5">

@@ -19,7 +19,7 @@ export function FileValidationCard({
 }: FileValidationCardProps) {
   return (
     <section className="w-full shrink-0">
-      <h3 className="mb-3 text-sm font-semibold text-[#191c1f]">Readiness checks</h3>
+      <h3 className="mb-3 text-sm font-semibold text-app-ink">File checks</h3>
 
       <ul className="space-y-2.5">
         {items.map((item) => (
@@ -29,13 +29,13 @@ export function FileValidationCard({
                 <Check aria-hidden="true" className="h-3 w-3 stroke-[2.5]" />
               </span>
             ) : hasFile && isValidating ? (
-              <Loader2 aria-hidden="true" className="h-5 w-5 shrink-0 animate-spin text-[#494fdf]" />
+              <Loader2 aria-hidden="true" className="h-5 w-5 shrink-0 animate-spin text-app-accent" />
             ) : hasFile && item.message ? (
               <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#e23b4a]/10 text-[#e23b4a]">
                 <X aria-hidden="true" className="h-3 w-3 stroke-[2.5]" />
               </span>
             ) : (
-              <Circle aria-hidden="true" className="h-5 w-5 shrink-0 text-[#c9c9cd]" />
+              <Circle aria-hidden="true" className="h-5 w-5 shrink-0 text-app-muted" />
             )}
 
             <span className={`text-sm ${item.message ? "text-[#8b0000]" : "text-[#3a3d40]"}`}>

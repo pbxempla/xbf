@@ -7,19 +7,15 @@ import { XemplaLogo } from "@/components/icons/Icons";
 interface UploadHeaderProps {
   userEmail?: string;
   userName?: string;
-  emailType?: "personal" | "work";
-  creditBalance?: number;
+  creditBalance: number;
   onLogout?: () => void;
-  sectionLabel?: string;
 }
 
 export function UploadHeader({
   userEmail,
   userName,
-  emailType,
   creditBalance,
   onLogout,
-  sectionLabel = "Data workspace",
 }: UploadHeaderProps) {
   const displayName = userName?.trim() || userEmail || "Signed in";
   const initials = displayName
@@ -31,28 +27,26 @@ export function UploadHeader({
     .toUpperCase();
 
   return (
-    <header className="z-10 flex h-16 w-full shrink-0 items-center justify-between bg-black px-5 text-white sm:px-8 lg:px-10">
-      <div className="flex items-center gap-8">
+    <header className="z-10 flex h-16 w-full shrink-0 items-center justify-between bg-black px-4 text-white sm:px-6 lg:px-8">
+      <div className="flex min-w-0 items-center">
         <XemplaLogo onDark />
-        <span className="hidden border-l border-white/15 pl-8 text-sm text-white/60 sm:block">
-          {sectionLabel}
-        </span>
       </div>
 
-      <div className="flex items-center gap-3 sm:gap-4">
-        <div className="max-w-36 text-right sm:max-w-64">
-          <p className="truncate text-xs font-semibold text-white sm:text-sm">{displayName}</p>
-          <p className="truncate text-[11px] text-white/60 sm:text-xs">
-            {emailType ? `${emailType === "work" ? "Work" : "Personal"} account` : ""}
-            {typeof creditBalance === "number"
-              ? `${emailType ? " · " : ""}${creditBalance} credits`
-              : ""}
-          </p>
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        <div
+          role="group"
+          aria-label={`${creditBalance} credits available`}
+          className="flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg border border-white/35 px-2.5 text-xs font-semibold text-white sm:gap-2 sm:px-3 sm:text-sm"
+        >
+          <span>Credits</span>
+          <span>{creditBalance}</span>
         </div>
-
+        <p className="hidden max-w-56 truncate text-right text-sm font-semibold text-white sm:block">
+          {displayName}
+        </p>
         <div
           aria-hidden="true"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#494fdf] text-xs font-semibold text-white"
+          className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-xs font-semibold text-app-ink sm:flex"
         >
           {initials || "X"}
         </div>
@@ -62,7 +56,7 @@ export function UploadHeader({
           onClick={onLogout}
           aria-label="Sign out"
           title="Sign out"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-white/20 text-white/75 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-white/40 text-white/75 transition-colors hover:bg-white/10 hover:text-white active:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
         >
           <LogOut aria-hidden="true" className="h-4 w-4" />
         </button>
