@@ -11,7 +11,7 @@
     "start": "next start",
     "smtp:check": "node scripts/check-smtp.mjs",
     "test:upload-security": "node --test tests/upload-security.test.cjs tests/upload-integration.test.cjs tests/preview-integration.test.cjs",
-    "test:mapping": "node --test tests/mapping-ai-consent.test.cjs tests/mapping-source-integrity.test.cjs tests/mapping-review.test.cjs",
+    "test:mapping": "node --test tests/mapping-ai-consent.test.cjs tests/mapping-source-integrity.test.cjs tests/mapping-review.test.cjs tests/mapping-auto-analysis.test.cjs",
     "lint": "eslint"
   },
   "dependencies": {

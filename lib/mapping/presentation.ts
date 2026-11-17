@@ -29,6 +29,7 @@ export const CATEGORY_LABEL: Record<DisplayCategory, string> = {
   unmapped: "Not mapped",
   manual: "Chosen by you",
   ai_accepted: "AI suggestion accepted by you",
+  ai_auto: "Selected by AI: review",
   ai_rejected: "AI suggestion rejected",
 };
 
@@ -40,5 +41,6 @@ export const CATEGORY_TONE: Record<DisplayCategory, string> = {
   unmapped: "border-app-line bg-app-canvas text-app-muted",
   manual: "border-app-line bg-white text-app-ink",
   ai_accepted: "border-blue-300 bg-white text-blue-900",
+  ai_auto: "border-blue-300 bg-blue-50 text-blue-900",
   ai_rejected: "border-app-line bg-app-canvas text-app-muted",
 };

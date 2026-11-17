@@ -2,6 +2,8 @@ import type {
   AnalyticsSubmitResult,
   CanonicalWorkOrderField,
   ImportResult,
+  AiConsentInfo,
+  AnalysisStatus,
   AiWithheldSuggestion,
   JevSuggestion,
   MappingDecisionMetadata,
@@ -12,6 +14,16 @@ type JsonRecord = Record<string, unknown>;
 
 const isRecord = (value: unknown): value is JsonRecord =>
   typeof value === "object" && value !== null && !Array.isArray(value);
+
+/** Error carrying the backend's machine-readable `detail.code`, when present. */
+export class MappingApiError extends Error {
+  code: string | null;
+  constructor(message: string, code: string | null) {
+    super(message);
+    this.name = "MappingApiError";
+    this.code = code;
+  }
+}
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, {
@@ -37,7 +49,12 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
         : isRecord(body) && isRecord(body.detail) && typeof body.detail.message === "string"
           ? body.detail.message
           : `The mapping request failed (HTTP ${response.status}).`;
-    throw new Error(detail);
+    throw new MappingApiError(
+      detail,
+      isRecord(body) && isRecord(body.detail) && typeof body.detail.code === "string"
+        ? body.detail.code
+        : null,
+    );
   }
   if (!body || !isRecord(body)) {
     throw new Error("The mapping API returned an invalid response.");
@@ -112,12 +129,18 @@ export interface AiSuggestionResult {
  * provider and decides which fields are eligible; the consent flag is required by the API.
  * Callers must only invoke this from a user action after the disclosure.
  */
-export async function requestJevSuggestions(uploadId: string): Promise<AiSuggestionResult> {
+export async function requestJevSuggestions(
+  uploadId: string,
+  options: { acknowledgePossibleDuplicate?: boolean } = {},
+): Promise<AiSuggestionResult> {
   const result = await requestJson<AiSuggestionResult>(
     `/api/backend/uploads/${encodeURIComponent(uploadId)}/mapping/ai-suggestions`,
     {
       method: "POST",
-      body: JSON.stringify({ consent_to_external_processing: true }),
+      body: JSON.stringify({
+        consent_to_external_processing: true,
+        ...(options.acknowledgePossibleDuplicate ? { acknowledge_possible_duplicate: true } : {}),
+      }),
     },
   );
   if (
@@ -134,6 +157,91 @@ export async function requestJevSuggestions(uploadId: string): Promise<AiSuggest
     throw new Error("The AI suggestion service returned an invalid response.");
   }
   return { ...result, withheld: Array.isArray(result.withheld) ? result.withheld : [] };
+}
+
+function parseConsent(value: unknown): AiConsentInfo {
+  if (
+    !isRecord(value) ||
+    typeof value.is_active !== "boolean" ||
+    typeof value.required_version !== "string" ||
+    typeof value.disclosure_text !== "string" ||
+    typeof value.disclosure_sha256 !== "string"
+  ) {
+    throw new Error("The consent service returned an invalid response.");
+  }
+  return value as unknown as AiConsentInfo;
+}
+
+const ANALYSIS_STATES = new Set([
+  "none", "auto_disabled", "disabled", "consent_required", "skipped", "limit_reached",
+  "rate_limited", "unavailable", "queued", "running", "succeeded", "failed", "cancelled",
+]);
+
+function parseAnalysis(value: unknown): AnalysisStatus {
+  if (
+    !isRecord(value) ||
+    typeof value.status !== "string" ||
+    !ANALYSIS_STATES.has(value.status) ||
+    (value.mode !== "auto" && value.mode !== "manual")
+  ) {
+    throw new Error("The analysis service returned an invalid response.");
+  }
+  return value as unknown as AnalysisStatus;
+}
+
+/**
+ * Idempotent start of the automatic background analysis. The server decides everything
+ * (switches, consent, limits); this never sends consent, targets or provenance. `retry` is
+ * only ever set by an explicit user action.
+ */
+export async function startAnalysis(
+  uploadId: string,
+  options: { retry?: boolean; acknowledgePossibleDuplicate?: boolean } = {},
+): Promise<AnalysisStatus> {
+  return parseAnalysis(
+    await requestJson<unknown>(
+      `/api/backend/uploads/${encodeURIComponent(uploadId)}/mapping/analysis`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ...(options.retry ? { retry: true } : {}),
+          ...(options.retry && options.acknowledgePossibleDuplicate
+            ? { acknowledge_possible_duplicate: true }
+            : {}),
+        }),
+      },
+    ),
+  );
+}
+
+export async function getAnalysisStatus(uploadId: string): Promise<AnalysisStatus> {
+  return parseAnalysis(
+    await requestJson<unknown>(
+      `/api/backend/uploads/${encodeURIComponent(uploadId)}/mapping/analysis`,
+    ),
+  );
+}
+
+export async function getAiConsent(): Promise<AiConsentInfo> {
+  return parseConsent(await requestJson<unknown>("/api/backend/users/me/ai-consent"));
+}
+
+/** One-time grant. The backend only accepts the version and disclosure hash it requires. */
+export async function grantAiConsent(info: AiConsentInfo): Promise<AiConsentInfo> {
+  return parseConsent(
+    await requestJson<unknown>("/api/backend/users/me/ai-consent/grant", {
+      method: "POST",
+      body: JSON.stringify({
+        consent_version: info.required_version,
+        disclosure_sha256: info.disclosure_sha256,
+        source: "mapping_ui",
+      }),
+    }),
+  );
+}
+
+export async function withdrawAiConsent(): Promise<void> {
+  await requestJson<unknown>("/api/backend/users/me/ai-consent/withdraw", { method: "POST" });
 }
 
 export async function submitAnalytics(uploadId: string): Promise<AnalyticsSubmitResult> {

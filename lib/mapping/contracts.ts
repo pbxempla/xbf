@@ -85,6 +85,8 @@ export interface AiCandidate {
   probability_margin: number;
   actionable: boolean;
   withheld_reasons: string[];
+  /** Backend-decided: the candidate passed the structural auto-selection gates. */
+  auto_selected?: boolean;
 }
 
 export interface MappingField {
@@ -147,6 +149,48 @@ export interface MappingDecisionMetadata {
   confidence: number | null;
   probability_margin?: number | null;
   rule_id?: string | null;
+}
+
+/** Account-level consent for external AI processing; enforced by the backend. */
+export interface AiConsentInfo {
+  purpose: string;
+  is_active: boolean;
+  status: "none" | "granted" | "withdrawn";
+  consent_version: string | null;
+  required_version: string;
+  is_current_version: boolean;
+  granted_at: string | null;
+  withdrawn_at: string | null;
+  disclosure_text: string;
+  disclosure_sha256: string;
+}
+
+/** Persisted status of the automatic background analysis (server-decided; never client-derived). */
+export type AnalysisState =
+  | "none"
+  | "auto_disabled"
+  | "disabled"
+  | "consent_required"
+  | "skipped"
+  | "limit_reached"
+  | "rate_limited"
+  | "unavailable"
+  | "queued"
+  | "running"
+  | "succeeded"
+  | "failed"
+  | "cancelled";
+
+export interface AnalysisStatus {
+  status: AnalysisState;
+  mode: "auto" | "manual";
+  run_id: string | null;
+  stage: string | null;
+  error_code: string | null;
+  retry_after_seconds: number | null;
+  required_version: string | null;
+  attempt_count: number | null;
+  cached: boolean;
 }
 
 export interface JevSuggestion {

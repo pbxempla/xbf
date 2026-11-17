@@ -17,9 +17,14 @@ import { authClient } from "@/lib/auth-client";
 import { ApiError, getCurrentUser } from "@/lib/api";
 import {
   confirmMapping,
+  getAiConsent,
+  getAnalysisStatus,
+  grantAiConsent,
   prepareMapping,
   requestJevSuggestions,
+  startAnalysis,
   submitAnalytics,
+  withdrawAiConsent,
 } from "@/lib/mapping/api";
 import { CANONICAL_FIELD_LABELS } from "@/lib/mapping/contracts";
 import type { CanonicalWorkOrderField } from "@/lib/mapping/contracts";
@@ -96,7 +101,17 @@ export default function MappingPage() {
 
   // All mapping workflow logic (and its tests) lives in lib/mapping/review.ts.
   const [controller] = useState(() =>
-    createMappingController({ prepareMapping, requestJevSuggestions, confirmMapping, submitAnalytics }),
+    createMappingController({
+      prepareMapping,
+      requestJevSuggestions,
+      confirmMapping,
+      submitAnalytics,
+      getAiConsent,
+      grantAiConsent,
+      withdrawAiConsent,
+      startAnalysis,
+      getAnalysisStatus,
+    }),
   );
   const view = useSyncExternalStore(controller.subscribe, controller.getState, controller.getState);
   const loadedFor = useRef<string | null>(null);
@@ -196,9 +211,15 @@ export default function MappingPage() {
   const issues = proposal ? validate(proposal, review) : [];
   const canConfirm = phase === "ready" && issues.length === 0;
 
+  // The only entry points to the AI provider, both user clicks. The backend decides whether
+  // consent is active (a stored, versioned, server-checked record).
   const handleRequestSuggestions = () => {
     if (!uploadStillCurrent()) return;
-    void controller.requestSuggestions();
+    void controller.startSuggestions();
+  };
+  const handleAgreeAndRequest = () => {
+    if (!uploadStillCurrent()) return;
+    void controller.agreeAndRequest();
   };
   const handleConfirm = () => {
     if (!uploadStillCurrent()) return;
@@ -264,14 +285,27 @@ export default function MappingPage() {
                 <div className="flex flex-col gap-3">
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <h2 className="text-2xl font-semibold text-app-ink">Match columns</h2>
-                    <button
-                      type="button"
-                      onClick={() => controller.openConsent()}
-                      disabled={locked || ai.status === "requesting" || ai.status === "consent"}
-                      className={secondaryButton}
-                    >
-                      {ai.attempted ? "Get AI suggestions again" : "Get AI suggestions"}
-                    </button>
+                    {(ai.mode === "manual" ||
+                      (ai.mode === "auto" && ai.status === "idle" && ai.consent?.is_active === false)) && (
+                      <button
+                        type="button"
+                        onClick={handleRequestSuggestions}
+                        disabled={
+                          locked ||
+                          ai.status === "checking" ||
+                          ai.status === "requesting" ||
+                          ai.status === "analysing" ||
+                          ai.status === "consent"
+                        }
+                        className={secondaryButton}
+                      >
+                        {ai.mode === "auto"
+                          ? "Turn on AI analysis"
+                          : ai.attempted
+                            ? "Get AI suggestions again"
+                            : "Get AI suggestions"}
+                      </button>
+                    )}
                   </div>
 
                   {ai.status === "consent" && (
@@ -280,34 +314,84 @@ export default function MappingPage() {
                       aria-label="AI suggestion disclosure"
                       className="rounded-xl border border-app-line bg-app-canvas p-4 text-sm text-app-ink"
                     >
-                      <p className="font-semibold">Send column samples to an external AI provider?</p>
+                      <p className="font-semibold">Allow external AI processing for your account?</p>
                       <p className="mt-2 text-xs leading-5 text-app-muted">
-                        Column names, detected types and up to three short sample values per column
-                        (never the whole file) will be processed by an external AI provider
-                        (OpenRouter / JEV). Email addresses and phone numbers are redacted first, but
-                        other personal data in samples is not detected. Suggestions are never applied
-                        automatically; you review each one.
+                        {ai.consent?.disclosure_text}
                       </p>
+                      {ai.error && (
+                        <p role="alert" className="mt-2 text-xs text-red-800">{ai.error}</p>
+                      )}
                       <div className="mt-3 flex flex-wrap gap-3">
-                        <button type="button" onClick={handleRequestSuggestions} className={primaryButton}>
-                          Send samples and get suggestions
+                        <button type="button" onClick={handleAgreeAndRequest} className={primaryButton}>
+                          Agree and get suggestions
                         </button>
                         <button type="button" onClick={() => controller.cancelConsent()} className={secondaryButton}>
-                          Cancel
+                          Not now
                         </button>
                       </div>
                     </div>
                   )}
 
                   <p role="status" className="text-xs text-app-muted">
-                    {ai.status === "requesting"
+                    {ai.status === "analysing"
+                      ? "AI is analysing your columns in the background. Keep mapping; suggestions will appear here."
+                      : ai.status === "checking"
+                      ? "Checking your AI consent…"
+                      : ai.status === "requesting"
                       ? "Finding matches for unmatched columns…"
                       : ai.status === "error"
                         ? "AI suggestions are unavailable. You can still map every column manually."
                         : ai.status === "done"
                           ? "AI suggestions are ready. Accept or reject each one; nothing is applied automatically."
-                          : "AI suggestions are optional and are only requested when you ask for them."}
+                          : ai.mode === "auto"
+                            ? "AI analysis runs automatically once you have allowed it. Nothing is applied without your review."
+                            : "AI suggestions are optional and are only requested when you ask for them."}
                   </p>
+                  {ai.consent?.is_active && (
+                    <p className="text-xs text-app-muted">
+                      External AI processing is allowed for your account.{" "}
+                      <button
+                        type="button"
+                        onClick={() => void controller.withdrawConsent()}
+                        className="font-semibold underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
+                      >
+                        Withdraw permission
+                      </button>
+                    </p>
+                  )}
+                  {ai.mode === "auto" && ai.status === "error" && !ai.needsAcknowledgement && (
+                    <div className="flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (uploadStillCurrent()) void controller.retryAnalysis();
+                        }}
+                        className={secondaryButton}
+                      >
+                        Try AI analysis again
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (uploadStillCurrent()) void controller.refreshAnalysis();
+                        }}
+                        className={secondaryButton}
+                      >
+                        Check status
+                      </button>
+                    </div>
+                  )}
+                  {ai.needsAcknowledgement && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (uploadStillCurrent()) void controller.retryAcknowledged();
+                      }}
+                      className={secondaryButton}
+                    >
+                      Retry anyway (the earlier request may already have been billed)
+                    </button>
+                  )}
                   {ai.status === "error" && ai.error && (
                     <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">
                       {ai.error}

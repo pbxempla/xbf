@@ -10,6 +10,10 @@ const allowedPaths = new Set([
   "users/me",
   "users/me/credits",
   "users/me/credits/transactions",
+  "users/me/ai-consent",
+  "users/me/ai-consent/grant",
+  "users/me/ai-consent/withdraw",
+  "users/me/ai-usage",
   "uploads",
 ]);
 
@@ -28,6 +32,7 @@ function isAllowedBackendPath(path: string[], method: string): boolean {
     (route === "import" && method === "GET") ||
     (route === "mapping/proposal" && method === "POST") ||
     (route === "mapping/ai-suggestions" && method === "POST") ||
+    (route === "mapping/analysis" && (method === "POST" || method === "GET")) ||
     (route === "mapping/confirm" && method === "POST") ||
     (route === "analytics/submit" && method === "POST")
   );
