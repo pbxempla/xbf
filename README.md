@@ -48,10 +48,10 @@ After a successful upload, the mapping page requests a backend mapping
 proposal, presents fixed CSV source columns on the left with canonical-field
 selectors in the middle, and confirms extraction before displaying valid and
 invalid row counts. The deterministic backend mapper runs first. If it leaves
-ambiguous or required fields unresolved, the frontend automatically requests
-bounded Jev suggestions through the server-only OpenRouter route; suggestions
-still require user confirmation. `OPENROUTER_API_KEY` is an optional server-only
-frontend environment variable and must never use a `NEXT_PUBLIC_` prefix.
+ambiguous or required fields unresolved, the user can explicitly request AI
+suggestions after a disclosure step; the FastAPI backend calls OpenRouter and
+suggestions are never applied automatically. The OpenRouter key is a backend-only
+setting and is not read by the frontend.
 Analytics submission is available after extraction when the backend's
 `ANALYTICS_ENGINE_API_URL` is configured. See the backend README for endpoint
 and environment details.

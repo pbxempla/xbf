@@ -27,6 +27,7 @@ function isAllowedBackendPath(path: string[], method: string): boolean {
   return (
     (route === "import" && method === "GET") ||
     (route === "mapping/proposal" && method === "POST") ||
+    (route === "mapping/ai-suggestions" && method === "POST") ||
     (route === "mapping/confirm" && method === "POST") ||
     (route === "analytics/submit" && method === "POST")
   );

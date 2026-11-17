@@ -66,6 +66,25 @@ export interface MappingSourceColumn {
   normalized_name: string;
   detected_type: string;
   sample_values: Array<string | null>;
+  /** Profiling statistics computed by the backend (Stage 4a); informational. */
+  stats?: Record<string, unknown> | null;
+}
+
+/** Decision categories computed by the backend Mapping Decision Engine (authoritative). */
+export type MappingDecision =
+  | "deterministic_match"
+  | "ai_suggestion"
+  | "ambiguous"
+  | "unmapped"
+  | "manual";
+
+/** JEV evidence for one field. Never a selection; `actionable` is decided by the backend. */
+export interface AiCandidate {
+  source_column_id: string;
+  confidence: number;
+  probability_margin: number;
+  actionable: boolean;
+  withheld_reasons: string[];
 }
 
 export interface MappingField {
@@ -76,6 +95,13 @@ export interface MappingField {
   confidence: number | null;
   rule_id: string | null;
   needs_review: boolean;
+  decision?: MappingDecision | null;
+  reasons?: string[];
+  ai_candidate?: AiCandidate | null;
+  /** Stage 4b: true only for deterministic matches the backend allows to preselect. */
+  preselected?: boolean;
+  basis?: string | null;
+  evidence?: string[];
 }
 
 export interface MappingProposal {
@@ -123,17 +149,19 @@ export interface MappingDecisionMetadata {
   rule_id?: string | null;
 }
 
-export interface JevRunMetadata {
-  model: "typesafe/jev-1.14";
-  prompt_version: "csv-mapping/v1";
-  input_tokens: number | null;
-  cost: number | null;
-}
-
 export interface JevSuggestion {
   target: CanonicalWorkOrderField;
   source_column_id: string | null;
   confidence: number;
   probability_margin: number;
-  needs_review: true;
+  status: "suggested";
+  decision?: "ai_suggestion" | "ambiguous";
+  reasons?: string[];
+}
+
+export interface AiWithheldSuggestion {
+  target: CanonicalWorkOrderField;
+  source_column_id: string;
+  confidence: number;
+  reasons: string[];
 }

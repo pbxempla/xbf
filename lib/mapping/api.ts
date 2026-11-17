@@ -2,8 +2,8 @@ import type {
   AnalyticsSubmitResult,
   CanonicalWorkOrderField,
   ImportResult,
+  AiWithheldSuggestion,
   JevSuggestion,
-  JevRunMetadata,
   MappingDecisionMetadata,
   MappingProposal,
 } from "./contracts";
@@ -58,6 +58,10 @@ export async function prepareMapping(uploadId: string): Promise<MappingProposal>
   ) {
     throw new Error("The backend returned an invalid mapping proposal.");
   }
+  // The proposal must belong to the upload that was requested; never render another file's columns.
+  if (result.upload_id !== uploadId) {
+    throw new Error("The mapping proposal does not belong to the uploaded file. Re-upload the file.");
+  }
   return result;
 }
 
@@ -65,8 +69,7 @@ export async function confirmMapping(
   uploadId: string,
   proposal: MappingProposal,
   mappings: Record<CanonicalWorkOrderField, string | null>,
-  decisionMetadata: Record<CanonicalWorkOrderField, MappingDecisionMetadata>,
-  jevMetadata: JevRunMetadata | null,
+  decisionMetadata: Record<string, MappingDecisionMetadata>,
 ): Promise<ImportResult> {
   const result = await requestJson<ImportResult>(
     `/api/backend/uploads/${encodeURIComponent(uploadId)}/mapping/confirm`,
@@ -76,8 +79,9 @@ export async function confirmMapping(
         schema_version: proposal.schema_version,
         header_fingerprint: proposal.header_fingerprint,
         mappings,
+        // Only the claim "the user accepted a suggestion" is sent; the backend
+        // verifies it against its own record and ignores client confidence/model.
         decision_metadata: decisionMetadata,
-        jev_metadata: jevMetadata,
         save_profile: true,
       }),
     },
@@ -95,36 +99,41 @@ export async function confirmMapping(
   return result;
 }
 
-export async function requestJevSuggestions(
-  proposal: MappingProposal,
-  targets: CanonicalWorkOrderField[],
-): Promise<{
+export interface AiSuggestionResult {
   model: string;
+  prompt_version: string;
   suggestions: JevSuggestion[];
-  usage: { input_tokens: number | null; cost: number | null } | null;
-}> {
-  const result = await requestJson<{
-    model: string;
-    suggestions: JevSuggestion[];
-    usage: { input_tokens: number | null; cost: number | null } | null;
-  }>("/api/mapping/suggest", {
-    method: "POST",
-    body: JSON.stringify({ proposal, targets }),
-  });
+  withheld: AiWithheldSuggestion[];
+  cached: boolean;
+}
+
+/**
+ * Explicit, user-initiated AI suggestion request. The backend (not the browser) calls the
+ * provider and decides which fields are eligible; the consent flag is required by the API.
+ * Callers must only invoke this from a user action after the disclosure.
+ */
+export async function requestJevSuggestions(uploadId: string): Promise<AiSuggestionResult> {
+  const result = await requestJson<AiSuggestionResult>(
+    `/api/backend/uploads/${encodeURIComponent(uploadId)}/mapping/ai-suggestions`,
+    {
+      method: "POST",
+      body: JSON.stringify({ consent_to_external_processing: true }),
+    },
+  );
   if (
-    result.model !== "typesafe/jev-1.14" ||
+    typeof result.model !== "string" ||
     !Array.isArray(result.suggestions) ||
     !result.suggestions.every(
       (suggestion) =>
         typeof suggestion.target === "string" &&
         typeof suggestion.confidence === "number" &&
         typeof suggestion.probability_margin === "number" &&
-        suggestion.needs_review === true,
+        (suggestion.source_column_id === null || typeof suggestion.source_column_id === "string"),
     )
   ) {
-    throw new Error("The Jev API returned an invalid mapping suggestion.");
+    throw new Error("The AI suggestion service returned an invalid response.");
   }
-  return result;
+  return { ...result, withheld: Array.isArray(result.withheld) ? result.withheld : [] };
 }
 
 export async function submitAnalytics(uploadId: string): Promise<AnalyticsSubmitResult> {

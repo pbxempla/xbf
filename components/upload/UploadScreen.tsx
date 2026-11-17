@@ -326,25 +326,35 @@ export function UploadScreen({
       setBackendWarningsAcknowledged(upload.validation_status === "passed");
 
       try {
+        const datasetPayload = {
+          fileName: upload.original_filename,
+          fileSize: upload.file_size,
+          formattedSize: parsedData.formattedSize,
+          fileType: upload.detected_file_type,
+          headers: upload.preview?.columns?.length
+            ? upload.preview.columns.map((c) => c.name)
+            : parsedData.headers,
+          rowCount: upload.preview?.total_rows ?? parsedData.rowCount,
+          columnCount: upload.preview?.total_columns ?? parsedData.columnCount,
+          previewRows: upload.preview?.preview_rows ?? parsedData.rows,
+          columns: upload.preview?.columns ?? null,
+          sheetName: upload.preview?.sheet_name ?? null,
+          backendUploadId: upload.upload_id,
+          backendValidationStatus: upload.validation_status,
+          backendSecurityFindings: upload.security_findings,
+        };
+        if (process.env.NODE_ENV !== "production") {
+          // DEV DIAGNOSTIC — no file contents, no secrets logged.
+          console.debug("[upload] writing sessionStorage", {
+            uploadId: datasetPayload.backendUploadId,
+            fileName: datasetPayload.fileName,
+            columnCount: datasetPayload.columnCount,
+            rowCount: datasetPayload.rowCount,
+          });
+        }
         sessionStorage.setItem(
           "xempla_current_dataset",
-          JSON.stringify({
-            fileName: upload.original_filename,
-            fileSize: upload.file_size,
-            formattedSize: parsedData.formattedSize,
-            fileType: upload.detected_file_type,
-            headers: upload.preview?.columns?.length
-              ? upload.preview.columns.map((c) => c.name)
-              : parsedData.headers,
-            rowCount: upload.preview?.total_rows ?? parsedData.rowCount,
-            columnCount: upload.preview?.total_columns ?? parsedData.columnCount,
-            previewRows: upload.preview?.preview_rows ?? parsedData.rows,
-            columns: upload.preview?.columns ?? null,
-            sheetName: upload.preview?.sheet_name ?? null,
-            backendUploadId: upload.upload_id,
-            backendValidationStatus: upload.validation_status,
-            backendSecurityFindings: upload.security_findings,
-          }),
+          JSON.stringify(datasetPayload),
         );
         setDatasetCacheSaved(true);
       } catch {
