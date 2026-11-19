@@ -6,6 +6,7 @@ import { ArrowRight, Trash2, Upload } from "lucide-react";
 import { UploadHeader } from "./UploadHeader";
 import { UploadTitleSection } from "./UploadTitleSection";
 import { FileDropzone } from "./FileDropzone";
+import { UploadedFileCardSkeleton } from "@/components/ui/Skeleton";
 import { UploadedFileCard } from "./UploadedFileCard";
 import { FileValidationCard } from "./FileValidationCard";
 import { DataPreviewTable } from "./DataPreviewTable";
@@ -70,6 +71,7 @@ export function UploadScreen({
   const [parsedData, setParsedData] = useState<ParsedFileData | null>(null);
   const [validationItems, setValidationItems] = useState<ValidationItem[]>(DEFAULT_VALIDATION_ITEMS);
   const [isValidating, setIsValidating] = useState<boolean>(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [inspection, setInspection] = useState<FileSecurityInspection | null>(null);
   const [hasSelectedFile, setHasSelectedFile] = useState(false);
@@ -357,6 +359,11 @@ export function UploadScreen({
           JSON.stringify(datasetPayload),
         );
         setDatasetCacheSaved(true);
+        // Clean pass: skip the extra "Continue" click. Warnings still need acknowledgement.
+        if (upload.validation_status === "passed") {
+          setIsRedirecting(true);
+          router.push("/mapping");
+        }
       } catch {
         setDatasetCacheSaved(false);
         setUploadError(
@@ -379,7 +386,7 @@ export function UploadScreen({
     }
   };
 
-  const isBusy = isValidating || isUploading;
+  const isBusy = isValidating || isUploading || isRedirecting;
   const canContinueToMapping = Boolean(
     backendUpload &&
       datasetCacheSaved &&
@@ -408,8 +415,10 @@ export function UploadScreen({
       />
 
       <main
-        className={`mx-auto flex w-full max-w-[1320px] flex-1 flex-col px-4 py-8 sm:px-6 sm:py-10 lg:px-8 ${
-          hasSelectedFile ? "lg:min-h-0 lg:overflow-hidden lg:py-6" : ""
+        className={`flex w-full flex-1 flex-col px-4 py-8 sm:px-6 sm:py-10 lg:px-8 ${
+          hasSelectedFile
+            ? "lg:min-h-0 lg:overflow-hidden lg:py-6"
+            : ""
         }`}
       >
         <UploadTitleSection />
@@ -428,7 +437,11 @@ export function UploadScreen({
           {hasSelectedFile && (
             <section className="flex min-w-0 flex-col gap-5 rounded-2xl border border-app-line bg-app-surface p-4 sm:p-6 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain">
               <h2 className="text-xl font-medium tracking-tight text-app-ink">File details</h2>
-              <UploadedFileCard data={parsedData} backendUpload={backendUpload} />
+              {parsedData || !isBusy ? (
+                <UploadedFileCard data={parsedData} backendUpload={backendUpload} />
+              ) : (
+                <UploadedFileCardSkeleton />
+              )}
 
               <FileValidationCard
                 items={validationItems}
@@ -590,7 +603,9 @@ export function UploadScreen({
               }`}
             >
               <span>
-                {isUploading
+                {isRedirecting
+                  ? "Opening mapping…"
+                  : isUploading
                   ? uploadProgress < 100
                     ? `Uploading ${uploadProgress}%`
                     : "Validating upload…"

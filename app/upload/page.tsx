@@ -1,5 +1,6 @@
 "use client";
 
+import { WorkspaceSkeleton } from "@/components/ui/Skeleton";
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
@@ -59,10 +60,7 @@ export default function UploadPage() {
 
   if (isPending) {
     return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center gap-3 bg-app-canvas">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-app-accent border-t-transparent" />
-        <p role="status" className="text-sm text-app-muted">Loading your workspace…</p>
-      </div>
+      <WorkspaceSkeleton label="Loading your workspace" />
     );
   }
 
@@ -90,10 +88,7 @@ export default function UploadPage() {
 
   if (!profile) {
     return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center gap-3 bg-app-canvas">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-app-accent border-t-transparent" />
-        <p role="status" className="text-sm text-app-muted">Loading your workspace…</p>
-      </div>
+      <WorkspaceSkeleton label="Loading your workspace" />
     );
   }
 

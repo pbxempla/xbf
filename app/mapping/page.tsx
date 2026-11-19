@@ -1,9 +1,10 @@
 "use client";
 
+import { MappingRowsSkeleton, WorkspaceSkeleton } from "@/components/ui/Skeleton";
 import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { AlertTriangle, ArrowLeft } from "lucide-react";
 import { MappingFieldCombobox } from "@/components/mapping/MappingFieldCombobox";
 import {
   ConflictBanner,
@@ -179,10 +180,7 @@ export default function MappingPage() {
 
   if (isPending || !hydrated || (session && !profile && !pageError)) {
     return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center gap-3 bg-app-canvas">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-app-accent border-t-transparent" />
-        <p role="status" className="text-sm text-app-muted">Loading mapping workspace…</p>
-      </div>
+      <WorkspaceSkeleton variant="mapping" label="Loading mapping workspace" />
     );
   }
   if (!session) return null;
@@ -234,7 +232,7 @@ export default function MappingPage() {
         creditBalance={profile.credit_balance}
         onLogout={handleLogout}
       />
-      <main className="mx-auto flex w-full max-w-[1320px] flex-1 flex-col px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      <main className="flex w-full flex-1 flex-col px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
         <UploadTitleSection
           currentStep="mapping"
           title="Map work-order columns"
@@ -261,8 +259,43 @@ export default function MappingPage() {
               )}
             </div>
 
+            {issues.length > 0 && !isConfirmed && (
+              <div
+                role="status"
+                aria-label="Before you can continue"
+                className="flex gap-3 rounded-xl border border-amber-200 border-l-4 border-l-amber-500 bg-amber-50 p-4 text-amber-950"
+              >
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+                  <AlertTriangle aria-hidden="true" className="size-5" />
+                </span>
+                <div className="flex min-w-0 flex-1 flex-col gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold">Before you can continue</p>
+                    <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-xs font-semibold text-amber-900">
+                      {issues.length} {issues.length === 1 ? "item" : "items"} to fix
+                    </span>
+                  </div>
+                  <ul className="flex flex-col gap-1.5 text-sm">
+                    {issues.map((issue, index) => (
+                      <li
+                        key={`${issue.code}-${issue.target ?? ""}-${index}`}
+                        className="flex items-start gap-2"
+                      >
+                        <span aria-hidden="true" className="mt-2 size-1.5 shrink-0 rounded-full bg-amber-500" />
+                        <span>
+                          {issue.target && issue.code === "required_missing"
+                            ? `${CANONICAL_FIELD_LABELS[issue.target as CanonicalWorkOrderField] ?? issue.target} must be mapped.`
+                            : issue.message}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
             {phase === "loading" && (
-              <p role="status" className="text-sm text-app-muted">Preparing column matches…</p>
+              <MappingRowsSkeleton />
             )}
 
             {phase === "error" && (
@@ -490,21 +523,6 @@ export default function MappingPage() {
                     })}
                   </ul>
                 </section>
-
-                {issues.length > 0 && !isConfirmed && (
-                  <div role="status" aria-label="Before you can continue" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
-                    <p className="font-semibold">Before you can continue</p>
-                    <ul className="mt-1 list-disc pl-5">
-                      {issues.map((issue, index) => (
-                        <li key={`${issue.code}-${issue.target ?? ""}-${index}`}>
-                          {issue.target && issue.code === "required_missing"
-                            ? `${CANONICAL_FIELD_LABELS[issue.target as CanonicalWorkOrderField] ?? issue.target} must be mapped.`
-                            : issue.message}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
 
                 {view.actionError && (
                   <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">

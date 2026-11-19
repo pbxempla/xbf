@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { PreviewTableSkeleton } from "@/components/ui/Skeleton";
 import { BackendUploadPreview, ParsedFileData } from "@/types/upload";
 
 interface DataPreviewTableProps {
@@ -138,13 +139,7 @@ export function DataPreviewTable({
           </div>
         </div>
       ) : isLoading ? (
-        <div
-          role="status"
-          className="flex min-h-[200px] flex-1 flex-col items-center justify-center gap-3 rounded-xl border border-app-line bg-app-canvas text-app-muted lg:min-h-0"
-        >
-          <span className="h-6 w-6 animate-spin rounded-full border-2 border-app-accent border-t-transparent" />
-          <span className="text-sm">Preparing your preview…</span>
-        </div>
+        <PreviewTableSkeleton />
       ) : (
         <div
           role="status"
