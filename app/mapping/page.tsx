@@ -4,7 +4,7 @@ import { MappingRowsSkeleton, WorkspaceSkeleton } from "@/components/ui/Skeleton
 import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ArrowLeft } from "lucide-react";
+import { ArrowLeft, X } from "lucide-react";
 import { MappingFieldCombobox } from "@/components/mapping/MappingFieldCombobox";
 import {
   ConflictBanner,
@@ -90,6 +90,8 @@ export default function MappingPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
   const [profileRetryCount, setProfileRetryCount] = useState(0);
+  const requiredFieldsRef = useRef<HTMLDivElement>(null);
+  const [dismissedIssuesKey, setDismissedIssuesKey] = useState<string | null>(null);
   const hydrated = useSyncExternalStore(subscribeNothing, () => true, () => false);
   const rawDataset = useSyncExternalStore(subscribeDataset, readStoredRaw, () => null);
   const dataset = useMemo<CachedDatasetInfo | null>(() => {
@@ -207,6 +209,14 @@ export default function MappingPage() {
   const isConfirmed = phase === "confirmed";
   const locked = phase !== "ready";
   const issues = proposal ? validate(proposal, review) : [];
+  const scrollToRequiredFields = () => {
+    const el = requiredFieldsRef.current;
+    if (!el) return;
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    el.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
+    el.focus({ preventScroll: true });
+  };
+  const issuesKey = issues.map((i) => `${i.code}:${i.target ?? ""}`).join("|");
   const canConfirm = phase === "ready" && issues.length === 0;
 
   // The only entry points to the AI provider, both user clicks. The backend decides whether
@@ -259,38 +269,40 @@ export default function MappingPage() {
               )}
             </div>
 
-            {issues.length > 0 && !isConfirmed && (
+            {issues.length > 0 && !isConfirmed && dismissedIssuesKey !== issuesKey && (
               <div
                 role="status"
                 aria-label="Before you can continue"
-                className="flex gap-3 rounded-xl border border-amber-200 border-l-4 border-l-amber-500 bg-amber-50 p-4 text-amber-950"
+                className="relative flex items-start rounded-lg bg-[#e5391a] px-5 py-4 text-white shadow-md"
               >
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
-                  <AlertTriangle aria-hidden="true" className="size-5" />
-                </span>
-                <div className="flex min-w-0 flex-1 flex-col gap-2">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-semibold">Before you can continue</p>
-                    <span className="rounded-full bg-amber-200/70 px-2 py-0.5 text-xs font-semibold text-amber-900">
-                      {issues.length} {issues.length === 1 ? "item" : "items"} to fix
-                    </span>
-                  </div>
-                  <ul className="flex flex-col gap-1.5 text-sm">
+                <button
+                  type="button"
+                  onClick={scrollToRequiredFields}
+                  title="Go to required fields"
+                  className="flex min-w-0 flex-1 cursor-pointer flex-col gap-1 rounded-md pr-8 text-left focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+                >
+                  <p className="text-lg font-bold leading-tight">Before you can continue</p>
+                  <ul className="flex flex-col gap-0.5 text-sm leading-6 text-white/95">
                     {issues.map((issue, index) => (
-                      <li
-                        key={`${issue.code}-${issue.target ?? ""}-${index}`}
-                        className="flex items-start gap-2"
-                      >
-                        <span aria-hidden="true" className="mt-2 size-1.5 shrink-0 rounded-full bg-amber-500" />
-                        <span>
-                          {issue.target && issue.code === "required_missing"
-                            ? `${CANONICAL_FIELD_LABELS[issue.target as CanonicalWorkOrderField] ?? issue.target} must be mapped.`
-                            : issue.message}
-                        </span>
+                      <li key={`${issue.code}-${issue.target ?? ""}-${index}`}>
+                        {issue.target && issue.code === "required_missing"
+                          ? `${CANONICAL_FIELD_LABELS[issue.target as CanonicalWorkOrderField] ?? issue.target} must be mapped.`
+                          : issue.message}
                       </li>
                     ))}
                   </ul>
-                </div>
+                  <span className="mt-1 text-xs font-semibold underline underline-offset-2">
+                    Go to required fields
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDismissedIssuesKey(issuesKey)}
+                  aria-label="Dismiss"
+                  className="absolute right-3 top-3 flex size-8 items-center justify-center rounded-md text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                >
+                  <X aria-hidden="true" className="size-4 stroke-[3]" />
+                </button>
               </div>
             )}
 
@@ -447,14 +459,16 @@ export default function MappingPage() {
                   />
                 )}
 
-                <RequiredFieldsPanel
-                  proposal={proposal}
-                  review={review}
-                  disabled={locked}
-                  onAccept={(target) => controller.acceptSuggestion(target)}
-                  onReject={(target) => controller.rejectSuggestion(target)}
-                  onPick={(target, columnId) => controller.assign(target, columnId)}
-                />
+                <div id="required-fields" ref={requiredFieldsRef} tabIndex={-1} className="scroll-mt-6 outline-none">
+                  <RequiredFieldsPanel
+                    proposal={proposal}
+                    review={review}
+                    disabled={locked}
+                    onAccept={(target) => controller.acceptSuggestion(target)}
+                    onReject={(target) => controller.rejectSuggestion(target)}
+                    onPick={(target, columnId) => controller.assign(target, columnId)}
+                  />
+                </div>
                 <ReviewList
                   proposal={proposal}
                   review={review}
