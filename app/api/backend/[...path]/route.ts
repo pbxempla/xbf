@@ -8,6 +8,7 @@ type RouteContext = {
 
 const allowedPaths = new Set([
   "users/me",
+  "users/me/avatar",
   "users/me/credits",
   "users/me/credits/transactions",
   "users/me/ai-consent",
@@ -163,7 +164,11 @@ async function proxyRequest(request: NextRequest, context: RouteContext) {
       status: response.status,
       headers: {
         "Content-Type": response.headers.get("content-type") || "application/json",
-        "Cache-Control": "no-store",
+        "Cache-Control":
+          method === "GET" && path.join("/") === "users/me/avatar"
+            ? response.headers.get("cache-control") || "no-store"
+            : "no-store",
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch (error) {

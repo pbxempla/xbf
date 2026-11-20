@@ -85,8 +85,8 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
   };
 
   return (
-    <div className="auth-form-content flex w-full flex-col font-sans text-[#191c1f]">
-      <div className="auth-form-brand mb-8">
+    <div className="auth-form-content flex w-full flex-col items-center text-center font-sans text-[#191c1f]">
+      <div className="auth-form-brand mb-8 flex justify-center">
         <XemplaLogo />
       </div>
 
@@ -97,7 +97,7 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
         <h1 className="text-[34px] font-medium leading-[1.08] tracking-[-0.04em] text-[#191c1f] sm:text-[40px]">
           {isSignInMode ? "Welcome back." : "Start something great."}
         </h1>
-        <p className="mt-3 max-w-sm text-sm leading-6 text-[#505a63]">
+        <p className="mx-auto mt-3 max-w-sm text-sm leading-6 text-[#505a63]">
           {isSignInMode
             ? "Enter your email and we’ll send you a secure sign-in code."
             : "Create your Xempla account and bring your work together."}
@@ -116,8 +116,8 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="flex flex-col">
-        <div className="mb-2 flex items-center justify-between gap-2">
+      <form onSubmit={handleSubmit} className="flex w-full flex-col">
+        <div className="mb-2 flex items-center justify-between gap-2 text-left">
           <label htmlFor="email-input" className="text-sm font-semibold text-[#191c1f]">
             Email address
           </label>
@@ -145,7 +145,7 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
             onChange={handleEmailChange}
             placeholder="name@company.com"
             disabled={loading}
-            className="h-14 w-full rounded-xl border border-[#e2e2e7] bg-white pl-12 pr-12 text-base tracking-[0.01em] text-[#191c1f] outline-none transition-colors placeholder:text-[#8d969e] focus:border-[#494fdf] focus:ring-2 focus:ring-[#494fdf]/15 disabled:bg-[#f4f4f4]"
+            className="h-14 w-full rounded-xl text-left border border-[#e2e2e7] bg-white pl-12 pr-12 text-base tracking-[0.01em] text-[#191c1f] outline-none transition-colors placeholder:text-[#8d969e] focus:border-[#494fdf] focus:ring-2 focus:ring-[#494fdf]/15 disabled:bg-[#f4f4f4]"
           />
           {classification.isValid && (
             <span className="absolute right-4 top-1/2 flex h-5 w-5 -translate-y-1/2 items-center justify-center rounded-full bg-[#00a87e]/10 text-[#006400]">
@@ -157,7 +157,7 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
         <button
           type="submit"
           disabled={loading}
-          className="mt-5 flex h-12 w-full items-center justify-between rounded-full bg-black px-6 text-sm font-semibold tracking-[0.01em] text-white transition-colors hover:bg-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] disabled:cursor-not-allowed disabled:opacity-60"
+          className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-full bg-black px-6 text-sm font-semibold tracking-[0.01em] text-white transition-colors hover:bg-[#191c1f] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (
             <span className="mx-auto flex items-center gap-2">
@@ -180,7 +180,7 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
           <button
             type="button"
             onClick={handleUseWorkEmailInstead}
-            className="mt-3 flex min-h-12 w-full items-center justify-between gap-3 rounded-full border border-[#e2e2e7] px-6 py-2 text-left text-sm font-medium text-[#191c1f] transition-colors hover:bg-[#f4f4f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
+            className="mt-3 flex min-h-12 w-full items-center justify-center gap-3 rounded-full border border-[#e2e2e7] px-6 py-2 text-center text-sm font-medium text-[#191c1f] transition-colors hover:bg-[#f4f4f4] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
           >
             <span>Sign up with work email to get 200 credits</span>
             <Building2 aria-hidden="true" className="h-4 w-4 shrink-0" />
@@ -188,7 +188,7 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
         )}
       </form>
 
-      <div className="auth-oauth-options">
+      <div className="auth-oauth-options w-full">
         <div className="my-5 flex items-center gap-4 text-xs text-[#8d969e]">
           <span className="h-px flex-1 bg-[#e2e2e7]" />
           or continue with

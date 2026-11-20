@@ -10,6 +10,13 @@ export interface EmailClassification {
   error?: string | null;
 }
 
+export type PrimaryRole =
+  | "fm_provider"
+  | "bid_manager"
+  | "asset_owner"
+  | "operations_manager"
+  | "compliance_lead";
+
 export interface UserProfile {
   id: string;
   email: string;
@@ -23,6 +30,12 @@ export interface UserProfile {
   isVerified?: boolean;
   auth_provider?: string;
   full_name?: string | null;
+  job_title?: string | null;
+  company_name?: string | null;
+  phone_number?: string | null;
+  primary_role?: PrimaryRole | null;
+  profile_complete?: boolean;
+  avatar_version?: string | null;
   name?: string | null;
   created_at?: string;
   updated_at?: string;

@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { ApiError, getCurrentUser } from "@/lib/api";
 import { UserProfile } from "@/types/auth";
-import { UploadHeader } from "@/components/upload/UploadHeader";
+import { DashboardShell } from "@/components/dashboard/DashboardShell";
+import { DashboardCard } from "@/components/dashboard/DashboardCard";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -86,60 +87,105 @@ export default function DashboardPage() {
 
   const firstName = profile.full_name?.trim().split(/\s+/)[0] || "there";
 
+  const lenses = [
+    "Operations",
+    "Cost Management",
+    "Finance",
+    "SLA & Contract Compliance",
+    "Contractor Performance",
+    "Training",
+    "Data Quality",
+  ];
+
   return (
-    <div className="flex min-h-screen w-full flex-col bg-app-canvas text-app-ink">
-      <UploadHeader
-        userEmail={profile.email}
-        userName={profile.full_name || undefined}
-        creditBalance={profile.credit_balance}
-        onLogout={handleLogout}
-      />
-
-      <main className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-        <div className="mb-8 sm:mb-10">
-          <h1 className="text-3xl font-medium leading-tight tracking-tight sm:text-4xl">
-            Welcome back, {firstName}.
-          </h1>
-        </div>
-
-        <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.8fr)] lg:gap-14">
-          <section className="rounded-2xl border border-app-line bg-app-surface p-6 sm:p-8">
-            <h2 className="text-2xl font-medium tracking-tight">Upload facility data</h2>
-            <p className="mt-2 max-w-xl text-sm leading-6 text-app-muted">
-              Choose a CSV or Excel file to map facility and work-order fields.
+    <DashboardShell
+      title={`Welcome back, ${firstName}`}
+      userEmail={profile.email}
+      userName={profile.full_name || undefined}
+      creditBalance={profile.credit_balance}
+      onLogout={handleLogout}
+    >
+      {!profile.profile_complete ? (
+        <section
+          aria-label="Complete your profile"
+          className="mb-4 flex flex-col gap-3 rounded-3xl bg-white p-6 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div>
+            <h2 className="text-lg font-medium tracking-tight">Complete your profile</h2>
+            <p className="mt-1 text-sm text-app-muted">
+              Add your job title, company and role to finish setting up your account.
             </p>
-            <button
-              type="button"
-              onClick={() => router.push("/upload")}
-              className="mt-6 inline-flex min-h-12 items-center justify-center rounded-lg bg-app-accent px-6 text-sm font-semibold text-white transition-colors hover:bg-app-accent-strong active:bg-[#204d9c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
-            >
-              Choose a file
-            </button>
-          </section>
+          </div>
+          <button
+            type="button"
+            onClick={() => router.push("/profile")}
+            className="inline-flex h-12 shrink-0 items-center justify-center rounded-full bg-black px-6 text-sm font-semibold text-white transition-colors hover:bg-app-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
+          >
+            Complete profile
+          </button>
+        </section>
+      ) : null}
 
-          <section>
-            <h2 className="text-sm font-semibold text-app-muted">Account details</h2>
-            <dl className="mt-3 space-y-3 text-sm">
-              <div className="flex flex-col gap-1 sm:flex-row sm:justify-between sm:gap-4 lg:flex-col lg:gap-1">
-                <dt className="text-app-muted">Email</dt>
-                <dd className="break-all font-medium text-app-ink sm:text-right lg:text-left">
-                  {profile.email}
-                </dd>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <dt className="text-app-muted">Account type</dt>
-                <dd className="font-medium capitalize text-app-ink">{profile.email_type}</dd>
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <dt className="text-app-muted">Email status</dt>
-                <dd className="font-medium text-app-ink">
-                  {profile.is_verified ? "Verified" : "Unverified"}
-                </dd>
-              </div>
-            </dl>
-          </section>
+      <div className="grid gap-4 lg:grid-cols-3">
+        <DashboardCard
+          title="Data readiness"
+          subtitle="Overall score across your uploads"
+          emptyMessage="Readiness appears once analysis results are available."
+          areaClassName="h-48"
+        />
+        <DashboardCard
+          title="Work-order volume"
+          subtitle="Jobs by month"
+          emptyMessage="No analysed work orders yet."
+          areaClassName="h-48"
+        />
+        <DashboardCard
+          title="Recent uploads"
+          subtitle="Latest facility exports"
+          emptyMessage="Uploaded files will be listed here."
+          areaClassName="h-48"
+        />
+      </div>
+
+      <section
+        aria-label="Insight areas"
+        className="mt-4 rounded-3xl bg-white p-6"
+      >
+        <h2 className="text-lg font-medium tracking-tight">Insight areas</h2>
+        <p className="mt-1 text-sm text-app-muted">
+          Results for each area will appear here when analysis is complete.
+        </p>
+        <ul className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {lenses.map((lens) => (
+            <li
+              key={lens}
+              className="flex min-h-28 flex-col justify-between rounded-2xl bg-app-canvas p-4"
+            >
+              <span className="text-sm font-medium">{lens}</span>
+              <span className="text-sm text-app-muted">Awaiting data</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section
+        aria-label="Upload facility data"
+        className="mt-4 flex flex-col gap-4 rounded-3xl bg-black p-6 text-white sm:flex-row sm:items-center sm:justify-between"
+      >
+        <div>
+          <h2 className="text-lg font-medium tracking-tight">Upload facility data</h2>
+          <p className="mt-1 text-sm text-white/70">
+            Choose a CSV or Excel file to map facility and work-order fields.
+          </p>
         </div>
-      </main>
-    </div>
+        <button
+          type="button"
+          onClick={() => router.push("/upload")}
+          className="inline-flex h-12 shrink-0 items-center justify-center rounded-full bg-white px-6 text-sm font-semibold text-black transition-colors hover:bg-app-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+        >
+          Choose a file
+        </button>
+      </section>
+    </DashboardShell>
   );
 }

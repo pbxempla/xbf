@@ -65,7 +65,7 @@ export function SignupSplitScreen() {
 
   return (
     <div className="flex h-full max-h-full w-full overflow-hidden bg-white lg:flex-row">
-      <section className="z-10 flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-white px-6 py-4 sm:px-12 lg:w-[60%] lg:px-14 lg:py-2 xl:px-20">
+      <section className="z-10 flex h-full min-h-0 w-full items-center justify-center overflow-hidden bg-white px-6 py-4 sm:px-12 lg:w-1/2 lg:px-14 lg:py-2 xl:px-20">
         <div
           className={`w-full ${
             screenState === "authenticated" ? "max-w-[540px]" : "max-w-[420px]"
@@ -96,7 +96,7 @@ export function SignupSplitScreen() {
         </div>
       </section>
 
-      <section className="hidden h-full min-h-0 w-[40%] lg:block">
+      <section className="hidden h-full min-h-0 w-1/2 lg:block">
         <AuthIllustration />
       </section>
     </div>

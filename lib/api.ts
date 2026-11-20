@@ -1,4 +1,4 @@
-import { UserProfile } from "@/types/auth";
+import { PrimaryRole, UserProfile } from "@/types/auth";
 
 export class ApiError extends Error {
   constructor(
@@ -58,4 +58,78 @@ export async function getCurrentUser(): Promise<UserProfile> {
     auth_provider: data.auth_provider || "better_auth",
     full_name: data.full_name || null,
   };
+}
+
+export interface ProfileUpdate {
+  full_name: string;
+  job_title: string;
+  company_name: string;
+  phone_number: string;
+  primary_role: PrimaryRole;
+}
+
+function messageFromDetail(detail: unknown): string | null {
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    const first = detail[0] as { msg?: unknown } | undefined;
+    if (first && typeof first.msg === "string") {
+      return first.msg.replace(/^Value error, /, "");
+    }
+  }
+  return null;
+}
+
+/** The backend validates every field; an empty string clears an optional one. */
+export async function updateCurrentUser(update: ProfileUpdate): Promise<UserProfile> {
+  const response = await fetch("/api/backend/users/me", {
+    method: "PATCH",
+    credentials: "same-origin",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(update),
+  });
+  const data = (await response.json().catch(() => null)) as { detail?: unknown } | null;
+  if (!response.ok) {
+    throw new ApiError(
+      messageFromDetail(data?.detail) || "Unable to save your profile.",
+      response.status,
+    );
+  }
+  return getCurrentUser();
+}
+
+export const AVATAR_MAX_BYTES = 2 * 1024 * 1024;
+export const AVATAR_ACCEPT = "image/jpeg,image/png,image/webp";
+
+/** Same-origin URL of the signed-in user's image; `version` busts the browser cache. */
+export function avatarUrl(version: string): string {
+  return `/api/backend/users/me/avatar?v=${encodeURIComponent(version)}`;
+}
+
+/** Early feedback only; the backend validates type and size authoritatively. */
+export function checkAvatarFile(file: File): string | null {
+  if (!AVATAR_ACCEPT.split(",").includes(file.type)) {
+    return "Choose a JPEG, PNG or WebP image.";
+  }
+  if (file.size > AVATAR_MAX_BYTES) {
+    return "Choose an image that is 2 MB or smaller.";
+  }
+  return null;
+}
+
+export async function uploadAvatar(file: File): Promise<UserProfile> {
+  const body = new FormData();
+  body.append("file", file);
+  const response = await fetch("/api/backend/users/me/avatar", {
+    method: "POST",
+    credentials: "same-origin",
+    body,
+  });
+  if (!response.ok) {
+    const data = (await response.json().catch(() => null)) as { detail?: unknown } | null;
+    throw new ApiError(
+      messageFromDetail(data?.detail) || "Unable to upload your photo.",
+      response.status,
+    );
+  }
+  return getCurrentUser();
 }

@@ -3,12 +3,17 @@ import React from "react";
 export function XemplaLogo({
   className = "h-7",
   onDark = false,
+  iconOnly = false,
 }: {
   className?: string;
   onDark?: boolean;
+  iconOnly?: boolean;
 }) {
   return (
-    <div className={`flex items-center gap-2.5 ${className}`}>
+    <div
+      className={`flex items-center gap-2.5 ${className}`}
+      {...(iconOnly ? { role: "img", "aria-label": "Xempla" } : {})}
+    >
       {/* Stylized Modern X Mark */}
       <svg
         width="28"
@@ -44,13 +49,15 @@ export function XemplaLogo({
           strokeLinecap="round"
         />
       </svg>
-      <span
-        className={`text-[22px] font-medium tracking-tight font-sans ${
-          onDark ? "text-white" : "text-[#191c1f]"
-        }`}
-      >
-        Xempla
-      </span>
+      {!iconOnly && (
+        <span
+          className={`text-[22px] font-medium tracking-tight font-sans ${
+            onDark ? "text-white" : "text-[#191c1f]"
+          }`}
+        >
+          Xempla
+        </span>
+      )}
     </div>
   );
 }
