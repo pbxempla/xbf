@@ -231,10 +231,12 @@ export default function MappingPage() {
     if (!uploadStillCurrent()) return;
     void controller.agreeAndRequest();
   };
-  const handleConfirm = () => {
+  const handleAnalyse = async () => {
     if (!uploadStillCurrent()) return;
-    void controller.confirm();
+    const started = await controller.analyseNow();
+    if (started && uploadStillCurrent()) router.push(`/analysis/${view.uploadId}`);
   };
+  const isStarting = phase === "confirming" || view.analytics.status === "submitting";
 
   return (
     <div className="flex min-h-screen w-full flex-col bg-app-canvas text-app-ink">
@@ -551,15 +553,29 @@ export default function MappingPage() {
                     <ArrowLeft aria-hidden="true" className="h-4 w-4" />
                     Back to upload
                   </Link>
-                  {isConfirmed ? (
+                  {isConfirmed && !isStarting && (
                     <button type="button" onClick={() => void controller.reopen()} className={secondaryButton}>
                       Edit mapping
                     </button>
-                  ) : (
-                    <button type="button" onClick={handleConfirm} disabled={!canConfirm} className={primaryButton}>
-                      {phase === "confirming" ? "Extracting and validating…" : "Confirm mapping and extract"}
-                    </button>
                   )}
+                  {proposal && (
+                    <p className="text-sm text-app-muted sm:mr-auto">
+                      Uses about {Math.max(1, Math.ceil(proposal.total_rows / 50)).toLocaleString()} credits
+                      (1 per 50 rows) · you have {profile.credit_balance.toLocaleString()}
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void handleAnalyse()}
+                    disabled={isStarting || (!isConfirmed && !canConfirm) || (isConfirmed && (view.importResult?.valid_rows ?? 0) === 0)}
+                    className={primaryButton}
+                  >
+                    {phase === "confirming"
+                      ? "Validating your data…"
+                      : view.analytics.status === "submitting"
+                        ? "Starting analysis…"
+                        : "Analyse now"}
+                  </button>
                 </div>
               </>
             )}
@@ -580,25 +596,6 @@ export default function MappingPage() {
                       ))}
                     </ul>
                   </div>
-                )}
-                {view.importResult.valid_rows > 0 && (
-                  <button
-                    type="button"
-                    onClick={() => void controller.submitAnalytics()}
-                    disabled={view.analytics.status === "submitting"}
-                    className={`${primaryButton} mt-4`}
-                  >
-                    {view.analytics.status === "submitting"
-                      ? view.analytics.result
-                        ? `Sending ${view.analytics.result.submitted + view.analytics.result.failed} / ${view.analytics.result.total}…`
-                        : "Submitting…"
-                      : "Submit valid work orders"}
-                  </button>
-                )}
-                {view.analytics.result && view.analytics.status === "done" && (
-                  <p role="status" className="mt-3 text-sm text-app-muted">
-                    {view.analytics.result.message} ({view.analytics.result.submitted} submitted, {view.analytics.result.failed} failed)
-                  </p>
                 )}
               </section>
             )}

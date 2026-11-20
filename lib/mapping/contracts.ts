@@ -144,6 +144,14 @@ export interface AnalyticsSubmitResult {
   pending: number;
   status: "sending" | "submitted" | "partially_submitted" | "failed" | "nothing_to_send";
   message: string;
+  analysis_state: "not_started" | "sending" | "analysing" | "completed" | "failed";
+  /** Estimated total duration and what is left, in seconds (null before the analysis starts). */
+  eta_seconds: number | null;
+  remaining_seconds: number | null;
+  completed_at: string | null;
+  file_name: string | null;
+  /** Credits deducted for this analysis (1 per 50 rows, rounded up). */
+  credits_charged: number | null;
 }
 
 export interface MappingDecisionMetadata {

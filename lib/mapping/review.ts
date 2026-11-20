@@ -766,6 +766,36 @@ export function createMappingController(api: MappingApi, options: ControllerOpti
       await controller.load();
     },
 
+    /**
+     * One-step "Analyse now": confirm the mapping, then hand the rows to the engine. Resolves
+     * true once the engine accepted the job (it keeps running on the server), so the page can
+     * move to the ETA screen without waiting for the rows to finish sending.
+     */
+    async analyseNow(): Promise<boolean> {
+      if (state.phase === "ready") await controller.confirm();
+      const uploadId = state.uploadId;
+      if (!uploadId || state.phase !== "confirmed") return false;
+      if (!state.importResult || state.importResult.valid_rows === 0) {
+        set({ actionError: "There are no valid work orders to analyse. Edit the mapping and try again." });
+        return false;
+      }
+      const gen = generation;
+      set({ analytics: { status: "submitting", result: null }, actionError: null });
+      try {
+        const result = await api.submitAnalytics(uploadId);
+        if (!isCurrent(gen, uploadId)) return false;
+        set({ analytics: { status: "done", result } });
+        return true;
+      } catch (error) {
+        if (!isCurrent(gen, uploadId)) return false;
+        set({
+          analytics: { status: "error", result: null },
+          actionError: messageOf(error, "The analysis could not be started."),
+        });
+        return false;
+      }
+    },
+
     async submitAnalytics() {
       const uploadId = state.uploadId;
       if (!uploadId || state.phase !== "confirmed") return;

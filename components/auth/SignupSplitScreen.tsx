@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { SignupForm } from "./SignupForm";
 import { OtpVerification } from "./OtpVerification";
 import { AuthIllustration } from "./AuthIllustration";
@@ -9,44 +9,65 @@ import { AuthSessionResponse, OtpRequestResponse } from "@/types/auth";
 import { authClient } from "@/lib/auth-client";
 import { getCurrentUser } from "@/lib/api";
 
-type ScreenState = "form" | "otp" | "authenticated";
+type ScreenState = "checking" | "form" | "otp" | "authenticated" | "profile-error";
 
 export function SignupSplitScreen() {
-  const [screenState, setScreenState] = useState<ScreenState>("form");
+  const [screenState, setScreenState] = useState<ScreenState>("checking");
   const [otpData, setOtpData] = useState<OtpRequestResponse | null>(null);
   const [authSession, setAuthSession] = useState<AuthSessionResponse | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
 
+  // The form is only shown once we know nobody is signed in, so a signed-in user can never
+  // request a sign-in code. A session with a failing profile load stays off the form.
+  const loadSession = useCallback(async (isActive: () => boolean = () => true) => {
+    let hasSession = false;
+    try {
+      const { data, error } = await authClient.getSession();
+      if (error) throw new Error(error.message || "Unable to validate your session.");
+      if (!data?.session || !data.user) {
+        if (isActive()) setScreenState("form");
+        return;
+      }
+      hasSession = true;
+
+      const user = await getCurrentUser();
+      if (!isActive()) return;
+      setAuthSession({
+        is_new_user: user.is_new_user ?? false,
+        credits_awarded: user.credits_awarded ?? 0,
+        user,
+      });
+      setScreenState("authenticated");
+    } catch (error) {
+      if (!isActive()) return;
+      setAuthError(
+        error instanceof Error ? error.message : "Unable to load your account profile.",
+      );
+      setScreenState(hasSession ? "profile-error" : "form");
+    }
+  }, []);
+
   useEffect(() => {
     let active = true;
-    const loadSession = async () => {
-      try {
-        const { data, error } = await authClient.getSession();
-        if (error) throw new Error(error.message || "Unable to validate your session.");
-        if (!data?.session || !data.user) return;
-
-        const user = await getCurrentUser();
-        if (!active) return;
-        setAuthSession({
-          is_new_user: user.is_new_user ?? false,
-          credits_awarded: user.credits_awarded ?? 0,
-          user,
-        });
-        setScreenState("authenticated");
-      } catch (error) {
-        if (active) {
-          setAuthError(
-            error instanceof Error ? error.message : "Unable to load your account profile.",
-          );
-        }
-      }
-    };
-
-    void loadSession();
+    // State is only set after the awaited session request resolves, not synchronously.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadSession(() => active);
     return () => {
       active = false;
     };
-  }, []);
+  }, [loadSession]);
+
+  const reloadSession = () => {
+    setScreenState("checking");
+    setAuthError(null);
+    void loadSession();
+  };
+
+  const handleSignOut = async () => {
+    await authClient.signOut();
+    setAuthSession(null);
+    reloadSession();
+  };
 
   const handleOtpRequested = (data: OtpRequestResponse) => {
     setOtpData(data);
@@ -76,8 +97,39 @@ export function SignupSplitScreen() {
               {authError}
             </div>
           )}
+          {screenState === "checking" && (
+            <div role="status" aria-label="Checking your session" className="flex flex-col gap-4">
+              <div className="h-8 w-32 animate-pulse rounded-lg bg-[#f4f4f4]" />
+              <div className="h-12 w-3/4 animate-pulse rounded-lg bg-[#f4f4f4]" />
+              <div className="h-14 w-full animate-pulse rounded-xl bg-[#f4f4f4]" />
+              <div className="h-12 w-full animate-pulse rounded-full bg-[#f4f4f4]" />
+            </div>
+          )}
+
           {screenState === "form" && (
-            <SignupForm onOtpRequested={handleOtpRequested} />
+            <SignupForm
+              onOtpRequested={handleOtpRequested}
+              onAlreadySignedIn={reloadSession}
+            />
+          )}
+
+          {screenState === "profile-error" && (
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={reloadSession}
+                className="h-11 rounded-full bg-black px-6 text-sm font-semibold text-white"
+              >
+                Try again
+              </button>
+              <button
+                type="button"
+                onClick={() => void handleSignOut()}
+                className="h-11 rounded-full border border-[#e2e2e7] px-6 text-sm font-semibold text-[#191c1f]"
+              >
+                Sign out
+              </button>
+            </div>
           )}
 
           {screenState === "otp" && otpData && (

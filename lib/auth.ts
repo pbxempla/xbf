@@ -25,13 +25,20 @@ if (!authSecret || authSecret.length < 32) {
   throw new Error("BETTER_AUTH_SECRET must contain at least 32 characters.");
 }
 
+const pool = new Pool({ connectionString: databaseUrl });
+
+export async function accountExists(email: string): Promise<boolean> {
+  const result = await pool.query('select 1 from "user" where lower(email) = $1 limit 1', [
+    email.trim().toLowerCase(),
+  ]);
+  return (result.rowCount ?? 0) > 0;
+}
+
 export const auth = betterAuth({
   secret: authSecret,
   baseURL,
   trustedOrigins: [baseURL, ...devTrustedOrigins],
-  database: new Pool({
-    connectionString: databaseUrl,
-  }),
+  database: pool,
   user: {
     additionalFields: {
       creditBalance: {

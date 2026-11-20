@@ -159,3 +159,63 @@ export async function sendOtpEmail({ to, otp, type }: SendOtpEmailOptions): Prom
     text: `Your Xempla verification code is: ${otp}. It expires in 10 minutes.`,
   });
 }
+
+export interface SendAnalysisReadyEmailOptions {
+  to: string;
+  fileName: string;
+  rows: number;
+  link: string;
+}
+
+const escapeHtml = (value: string) =>
+  value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
+
+/**
+ * Tells a user their analysis has finished. Carries no analysis data, only the file name and a
+ * link back to the app. Falls back to console logging when SMTP is not configured (dev).
+ */
+export async function sendAnalysisReadyEmail({
+  to,
+  fileName,
+  rows,
+  link,
+}: SendAnalysisReadyEmailOptions): Promise<void> {
+  const mailServer = process.env.XEMPLA_MAIL_SERVER?.trim();
+  const useCredentials = process.env.XEMPLA_USE_CREDENTIALS === "true";
+  const mailUsername = process.env.XEMPLA_MAIL_USERNAME?.trim();
+  const mailPassword = process.env.XEMPLA_MAIL_PASSWORD?.trim();
+  const mailFrom = process.env.XEMPLA_MAIL_FROM?.trim() || "Xempla Workspace <auth@xempla.com>";
+  const subject = `Your analysis of ${fileName} is ready`;
+  const text = `Your analysis of ${fileName} (${rows.toLocaleString()} work orders) is ready.\nOpen it: ${link}`;
+
+  if (!mailServer || (useCredentials && (!mailUsername || !mailPassword))) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("SMTP server and required credentials must be configured in production.");
+    }
+    console.log("\n[XEMPLA - ANALYSIS READY EMAIL (DEV FALLBACK)]");
+    console.log(`  Recipient: ${to}\n  Subject:   ${subject}\n  Link:      ${link}\n`);
+    return;
+  }
+
+  const transporter = nodemailer.createTransport({
+    host: mailServer,
+    port: Number(process.env.XEMPLA_MAIL_PORT) || 587,
+    secure: process.env.XEMPLA_MAIL_SSL === "true",
+    auth: useCredentials && mailUsername && mailPassword ? { user: mailUsername, pass: mailPassword } : undefined,
+    tls: { rejectUnauthorized: process.env.NODE_ENV === "production" },
+  });
+
+  const safeName = escapeHtml(fileName);
+  await transporter.sendMail({
+    from: mailFrom,
+    to,
+    subject,
+    text,
+    html: `<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:520px;margin:0 auto;padding:32px;color:#0F172A">
+      <h1 style="font-size:20px;margin:0 0 12px">Your analysis is ready</h1>
+      <p style="font-size:15px;line-height:1.6;color:#334155">We finished analysing <strong>${safeName}</strong> (${rows.toLocaleString()} work orders).</p>
+      <p style="margin:24px 0"><a href="${escapeHtml(link)}" style="background:#000;color:#fff;text-decoration:none;padding:12px 24px;border-radius:999px;font-size:14px;font-weight:600">Open in Xempla</a></p>
+      <p style="font-size:12px;color:#94A3B8">You received this because you started an analysis in Xempla.</p>
+    </div>`,
+  });
+}

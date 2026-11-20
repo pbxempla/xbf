@@ -9,10 +9,12 @@ import { GoogleLogo, MicrosoftLogo, XemplaLogo } from "@/components/icons/Icons"
 
 interface SignupFormProps {
   onOtpRequested: (data: OtpRequestResponse) => void;
+  onAlreadySignedIn: () => void;
 }
 
-export function SignupForm({ onOtpRequested }: SignupFormProps) {
+export function SignupForm({ onOtpRequested, onAlreadySignedIn }: SignupFormProps) {
   const [isSignInMode, setIsSignInMode] = useState(false);
+  const [errorAction, setErrorAction] = useState<"signup" | "signin" | null>(null);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -23,6 +25,7 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
   const handleEmailChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(event.target.value);
     setErrorMessage(null);
+    setErrorAction(null);
     setOauthNotice(null);
   };
 
@@ -47,9 +50,38 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
 
     setLoading(true);
     setErrorMessage(null);
+    setErrorAction(null);
     setOauthNotice(null);
 
     try {
+      // A signed-in user never needs a code: send them to their workspace instead.
+      const { data: existingSession } = await authClient.getSession();
+      if (existingSession?.session && existingSession.user) {
+        onAlreadySignedIn();
+        return;
+      }
+
+      const lookup = await fetch("/api/account/exists", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      if (!lookup.ok) {
+        const body = (await lookup.json().catch(() => null)) as { detail?: string } | null;
+        throw new Error(body?.detail || "Could not check your account. Please try again.");
+      }
+      const { exists } = (await lookup.json()) as { exists: boolean };
+      if (isSignInMode && !exists) {
+        setErrorMessage("This email isn't registered. Create an account to continue.");
+        setErrorAction("signup");
+        return;
+      }
+      if (!isSignInMode && exists) {
+        setErrorMessage("An account with this email already exists. Sign in instead.");
+        setErrorAction("signin");
+        return;
+      }
+
       const { error } = await authClient.emailOtp.sendVerificationOtp({
         email: email.trim(),
         type: "sign-in",
@@ -107,6 +139,19 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
       {errorMessage && (
         <div role="alert" className="mb-5 rounded-xl border border-[#e23b4a]/20 bg-[#e23b4a]/5 px-4 py-3 text-sm text-[#8b0000]">
           {errorMessage}
+          {errorAction && (
+            <button
+              type="button"
+              onClick={() => {
+                setIsSignInMode(errorAction === "signin");
+                setErrorMessage(null);
+                setErrorAction(null);
+              }}
+              className="ml-2 font-semibold underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
+            >
+              {errorAction === "signup" ? "Create an account" : "Sign in"}
+            </button>
+          )}
         </div>
       )}
 
@@ -222,6 +267,7 @@ export function SignupForm({ onOtpRequested }: SignupFormProps) {
           onClick={() => {
             setIsSignInMode(!isSignInMode);
             setErrorMessage(null);
+            setErrorAction(null);
             setOauthNotice(null);
           }}
           className="font-semibold text-[#376cd5] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#494fdf]"
