@@ -244,17 +244,32 @@ export async function withdrawAiConsent(): Promise<void> {
   await requestJson<unknown>("/api/backend/users/me/ai-consent/withdraw", { method: "POST" });
 }
 
-export async function submitAnalytics(uploadId: string): Promise<AnalyticsSubmitResult> {
-  const result = await requestJson<AnalyticsSubmitResult>(
-    `/api/backend/uploads/${encodeURIComponent(uploadId)}/analytics/submit`,
-    { method: "POST" },
-  );
+function assertAnalyticsResult(result: AnalyticsSubmitResult): AnalyticsSubmitResult {
   if (
     typeof result.import_job_id !== "string" ||
+    typeof result.total !== "number" ||
     typeof result.submitted !== "number" ||
-    typeof result.failed !== "number"
+    typeof result.failed !== "number" ||
+    typeof result.pending !== "number"
   ) {
     throw new Error("The analytics API returned an invalid submission result.");
   }
   return result;
+}
+
+export async function submitAnalytics(uploadId: string): Promise<AnalyticsSubmitResult> {
+  return assertAnalyticsResult(
+    await requestJson<AnalyticsSubmitResult>(
+      `/api/backend/uploads/${encodeURIComponent(uploadId)}/analytics/submit`,
+      { method: "POST" },
+    ),
+  );
+}
+
+export async function fetchAnalyticsStatus(uploadId: string): Promise<AnalyticsSubmitResult> {
+  return assertAnalyticsResult(
+    await requestJson<AnalyticsSubmitResult>(
+      `/api/backend/uploads/${encodeURIComponent(uploadId)}/analytics/status`,
+    ),
+  );
 }

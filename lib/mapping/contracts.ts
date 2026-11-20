@@ -138,9 +138,11 @@ export interface ImportResult {
 
 export interface AnalyticsSubmitResult {
   import_job_id: string;
+  total: number;
   submitted: number;
   failed: number;
-  status: "submitted" | "partially_submitted" | "failed";
+  pending: number;
+  status: "sending" | "submitted" | "partially_submitted" | "failed" | "nothing_to_send";
   message: string;
 }
 
