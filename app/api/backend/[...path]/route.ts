@@ -72,7 +72,7 @@ function createAuthAssertion(
     iss: (
       process.env.BETTER_AUTH_URL ||
       process.env.NEXT_PUBLIC_APP_URL ||
-      "http://localhost:3000"
+      `http://localhost:${process.env.PORT || "3000"}`
     ).replace(/\/+$/, ""),
     aud: "xempla-api",
     iat: now,
@@ -93,12 +93,19 @@ async function proxyRequest(request: NextRequest, context: RouteContext) {
 
   if (method !== "GET") {
     const origin = request.headers.get("origin");
-    const appOrigin = new URL(
-      process.env.BETTER_AUTH_URL ||
-        process.env.NEXT_PUBLIC_APP_URL ||
-        "http://localhost:3000",
-    ).origin;
-    if (origin !== appOrigin) {
+    // Compare with the origin this request actually reached, so the check follows the
+    // port in use. Production additionally accepts the configured public URL (proxies).
+    const requestOrigin = request.nextUrl.origin;
+    const configured = process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL;
+    const allowedOrigins = new Set([requestOrigin]);
+    if (configured) {
+      try {
+        allowedOrigins.add(new URL(configured).origin);
+      } catch {
+        // ignore a malformed configured URL; the request origin still applies
+      }
+    }
+    if (!origin || !allowedOrigins.has(origin)) {
       return NextResponse.json({ detail: "Invalid request origin." }, { status: 403 });
     }
   }

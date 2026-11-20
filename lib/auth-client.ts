@@ -1,8 +1,9 @@
 import { createAuthClient } from "better-auth/react";
 import { emailOTPClient } from "better-auth/client/plugins";
 
+// No baseURL: the client calls /api/auth on whatever origin served the page, so changing
+// the dev port never sends the browser back to a different host or port.
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
   plugins: [emailOTPClient()],
 });
 
