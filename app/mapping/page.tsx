@@ -25,6 +25,7 @@ import {
   requestJevSuggestions,
   startAnalysis,
   submitAnalytics,
+  fetchAnalyticsStatus,
   withdrawAiConsent,
 } from "@/lib/mapping/api";
 import { CANONICAL_FIELD_LABELS } from "@/lib/mapping/contracts";
@@ -109,6 +110,7 @@ export default function MappingPage() {
       requestJevSuggestions,
       confirmMapping,
       submitAnalytics,
+      fetchAnalyticsStatus,
       getAiConsent,
       grantAiConsent,
       withdrawAiConsent,
@@ -586,10 +588,14 @@ export default function MappingPage() {
                     disabled={view.analytics.status === "submitting"}
                     className={`${primaryButton} mt-4`}
                   >
-                    {view.analytics.status === "submitting" ? "Submitting…" : "Submit valid work orders"}
+                    {view.analytics.status === "submitting"
+                      ? view.analytics.result
+                        ? `Sending ${view.analytics.result.submitted + view.analytics.result.failed} / ${view.analytics.result.total}…`
+                        : "Submitting…"
+                      : "Submit valid work orders"}
                   </button>
                 )}
-                {view.analytics.result && (
+                {view.analytics.result && view.analytics.status === "done" && (
                   <p role="status" className="mt-3 text-sm text-app-muted">
                     {view.analytics.result.message} ({view.analytics.result.submitted} submitted, {view.analytics.result.failed} failed)
                   </p>

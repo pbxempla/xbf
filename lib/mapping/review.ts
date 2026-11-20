@@ -301,6 +301,7 @@ export interface MappingApi {
     decisionMetadata: Record<string, MappingDecisionMetadata>,
   ): Promise<ImportResult>;
   submitAnalytics(uploadId: string): Promise<AnalyticsSubmitResult>;
+  fetchAnalyticsStatus(uploadId: string): Promise<AnalyticsSubmitResult>;
 }
 
 export type Phase = "no_upload" | "loading" | "error" | "ready" | "confirming" | "confirmed";
@@ -771,8 +772,16 @@ export function createMappingController(api: MappingApi, options: ControllerOpti
       const gen = generation;
       set({ analytics: { status: "submitting", result: null }, actionError: null });
       try {
-        const result = await api.submitAnalytics(uploadId);
+        let result = await api.submitAnalytics(uploadId);
         if (!isCurrent(gen, uploadId)) return;
+        // Dispatch runs in the background on the server; poll until nothing is pending.
+        while (result.status === "sending") {
+          set({ analytics: { status: "submitting", result } });
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          if (!isCurrent(gen, uploadId)) return;
+          result = await api.fetchAnalyticsStatus(uploadId);
+          if (!isCurrent(gen, uploadId)) return;
+        }
         set({ analytics: { status: "done", result } });
       } catch (error) {
         if (!isCurrent(gen, uploadId)) return;
