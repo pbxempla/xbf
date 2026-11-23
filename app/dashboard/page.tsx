@@ -8,6 +8,8 @@ import { ApiError, getCurrentUser } from "@/lib/api";
 import { UserProfile } from "@/types/auth";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
+import { InsightLenses } from "@/components/insights/InsightLenses";
+import { AnalysisPanel } from "@/components/analysis/AnalysisPanel";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -87,16 +89,6 @@ export default function DashboardPage() {
 
   const firstName = profile.full_name?.trim().split(/\s+/)[0] || "there";
 
-  const lenses = [
-    "Operations",
-    "Cost Management",
-    "Finance",
-    "SLA & Contract Compliance",
-    "Contractor Performance",
-    "Training",
-    "Data Quality",
-  ];
-
   return (
     <DashboardShell
       title={`Welcome back, ${firstName}`}
@@ -147,25 +139,19 @@ export default function DashboardPage() {
         />
       </div>
 
+      <AnalysisPanel email={profile.email} />
+
       <section
         aria-label="Insight areas"
         className="mt-4 rounded-3xl bg-white p-6"
       >
         <h2 className="text-lg font-medium tracking-tight">Insight areas</h2>
         <p className="mt-1 text-sm text-app-muted">
-          Results for each area will appear here when analysis is complete.
+          Headline numbers for your latest upload, one card per insight area.
         </p>
-        <ul className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          {lenses.map((lens) => (
-            <li
-              key={lens}
-              className="flex min-h-28 flex-col justify-between rounded-2xl bg-app-canvas p-4"
-            >
-              <span className="text-sm font-medium">{lens}</span>
-              <span className="text-sm text-app-muted">Awaiting data</span>
-            </li>
-          ))}
-        </ul>
+        <div className="mt-5">
+          <InsightLenses />
+        </div>
       </section>
 
       <section

@@ -1,5 +1,8 @@
 import type {
+  AnalyticsResultsPage,
   AnalyticsSubmitResult,
+  AnalyticsSummary,
+  InsightsResponse,
   CanonicalWorkOrderField,
   ImportResult,
   AiConsentInfo,
@@ -18,10 +21,12 @@ const isRecord = (value: unknown): value is JsonRecord =>
 /** Error carrying the backend's machine-readable `detail.code`, when present. */
 export class MappingApiError extends Error {
   code: string | null;
-  constructor(message: string, code: string | null) {
+  status: number | null;
+  constructor(message: string, code: string | null, status: number | null = null) {
     super(message);
     this.name = "MappingApiError";
     this.code = code;
+    this.status = status;
   }
 }
 
@@ -54,6 +59,7 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
       isRecord(body) && isRecord(body.detail) && typeof body.detail.code === "string"
         ? body.detail.code
         : null,
+      response.status,
     );
   }
   if (!body || !isRecord(body)) {
@@ -264,6 +270,50 @@ export async function submitAnalytics(uploadId: string): Promise<AnalyticsSubmit
       { method: "POST" },
     ),
   );
+}
+
+function assertInsights(insights: InsightsResponse): InsightsResponse {
+  if (typeof insights.import_job_id !== "string" || !isRecord(insights.lenses)) {
+    throw new Error("The insights API returned an invalid response.");
+  }
+  return insights;
+}
+
+export async function fetchUploadInsights(uploadId: string): Promise<InsightsResponse> {
+  return assertInsights(
+    await requestJson<InsightsResponse>(
+      `/api/backend/uploads/${encodeURIComponent(uploadId)}/insights`,
+    ),
+  );
+}
+
+/** Insights for the most recent extracted upload; rejects with a 404 ApiError when there is none. */
+export async function fetchLatestInsights(): Promise<InsightsResponse> {
+  return assertInsights(await requestJson<InsightsResponse>("/api/backend/insights/latest"));
+}
+
+export async function fetchAnalyticsSummary(uploadId: string): Promise<AnalyticsSummary> {
+  const summary = await requestJson<AnalyticsSummary>(
+    `/api/backend/uploads/${encodeURIComponent(uploadId)}/analytics/summary`,
+  );
+  if (typeof summary.analysed !== "number" || !isRecord(summary.breakdowns)) {
+    throw new Error("The analytics API returned an invalid summary.");
+  }
+  return summary;
+}
+
+export async function fetchAnalyticsResults(
+  uploadId: string,
+  cursor = 0,
+  limit = 25,
+): Promise<AnalyticsResultsPage> {
+  const page = await requestJson<AnalyticsResultsPage>(
+    `/api/backend/uploads/${encodeURIComponent(uploadId)}/analytics/results?limit=${limit}&cursor=${cursor}`,
+  );
+  if (!Array.isArray(page.items) || typeof page.total !== "number") {
+    throw new Error("The analytics API returned an invalid results page.");
+  }
+  return page;
 }
 
 export async function fetchAnalyticsStatus(uploadId: string): Promise<AnalyticsSubmitResult> {

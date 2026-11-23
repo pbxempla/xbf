@@ -152,6 +152,65 @@ export interface AnalyticsSubmitResult {
   file_name: string | null;
   /** Credits deducted for this analysis (1 per 50 rows, rounded up). */
   credits_charged: number | null;
+  /** Work orders the engine has finished (results stored) and ones it could not analyse. */
+  results_ready: number;
+  results_failed: number;
+}
+
+/** A deterministic metric. `value` is null when `status` is "unavailable" (never zero). */
+export interface InsightMetric {
+  value: number | string | boolean | null;
+  status: "ok" | "unavailable";
+  reason: string | null;
+}
+
+export interface InsightRankedItem {
+  key: string;
+  value: number;
+}
+
+export interface InsightLens {
+  key: string;
+  title: string;
+  metrics: Record<string, InsightMetric>;
+  tables: Record<string, unknown[]>;
+}
+
+export interface InsightsResponse {
+  import_job_id: string;
+  upload_id: string;
+  file_name: string;
+  rules_version: string;
+  computed_at: string;
+  data_quality: Record<string, unknown>;
+  aggregations: Record<string, unknown>;
+  lenses: Record<string, InsightLens>;
+}
+
+export interface AnalyticsSummary {
+  import_job_id: string;
+  analysed: number;
+  failed: number;
+  fault_skipped: number;
+  closure_skipped: number;
+  /** field name -> value -> number of work orders */
+  breakdowns: Record<string, Record<string, number>>;
+}
+
+export interface AnalyticsResultItem {
+  row_number: number;
+  wo_id: string;
+  facility_id: string;
+  engine_status: string;
+  fault_enrichment: Record<string, unknown> | null;
+  closure_enrichment: Record<string, unknown> | null;
+}
+
+export interface AnalyticsResultsPage {
+  import_job_id: string;
+  total: number;
+  items: AnalyticsResultItem[];
+  next_cursor: number | null;
 }
 
 export interface MappingDecisionMetadata {

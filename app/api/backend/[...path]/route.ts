@@ -16,6 +16,7 @@ const allowedPaths = new Set([
   "users/me/ai-consent/withdraw",
   "users/me/ai-usage",
   "uploads",
+  "insights/latest",
 ]);
 
 function isAllowedBackendPath(path: string[], method: string): boolean {
@@ -36,7 +37,10 @@ function isAllowedBackendPath(path: string[], method: string): boolean {
     (route === "mapping/analysis" && (method === "POST" || method === "GET")) ||
     (route === "mapping/confirm" && method === "POST") ||
     (route === "analytics/submit" && method === "POST") ||
-    (route === "analytics/status" && method === "GET")
+    (route === "analytics/status" && method === "GET") ||
+    (route === "insights" && method === "GET") ||
+    (route === "analytics/summary" && method === "GET") ||
+    (route === "analytics/results" && method === "GET")
   );
 }
 

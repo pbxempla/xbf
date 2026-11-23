@@ -406,9 +406,9 @@ export function UploadScreen({
       />
 
       <main
-        className={`flex w-full flex-1 flex-col px-4 py-8 sm:px-6 sm:py-10 lg:px-8 ${
+        className={`flex w-full flex-1 flex-col px-4 pb-8 pt-1 sm:px-6 sm:pb-10 sm:pt-1 lg:px-8 ${
           hasSelectedFile
-            ? "lg:min-h-0 lg:overflow-hidden lg:py-6"
+            ? "lg:min-h-0 lg:overflow-hidden lg:pb-6 lg:pt-1"
             : ""
         }`}
       >
@@ -426,7 +426,7 @@ export function UploadScreen({
           )}
 
           {hasSelectedFile && (
-            <section className="flex min-w-0 flex-col gap-5 rounded-2xl border border-app-line bg-app-surface p-4 sm:p-6 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain">
+            <section className="flex min-w-0 flex-col gap-5 rounded-3xl bg-white p-4 sm:p-6 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain">
               <h2 className="text-xl font-medium tracking-tight text-app-ink">File details</h2>
               {parsedData || !isBusy ? (
                 <UploadedFileCard data={parsedData} backendUpload={backendUpload} />
@@ -538,7 +538,7 @@ export function UploadScreen({
           )}
 
           {hasSelectedFile && (
-            <section className="flex min-w-0 flex-col gap-4 rounded-2xl border border-app-line bg-app-surface p-4 sm:p-6 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain">
+            <section className="flex min-w-0 flex-col gap-4 rounded-3xl bg-white p-4 sm:p-6 lg:min-h-0 lg:overflow-y-auto lg:overscroll-contain">
               <div className="flex shrink-0 flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xl font-medium tracking-tight text-app-ink">Data preview</h2>
                 <div className="flex items-center gap-2">
@@ -554,7 +554,7 @@ export function UploadScreen({
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isBusy}
-                    className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#737b82] px-4 text-sm font-semibold text-app-ink transition-colors hover:bg-app-canvas active:bg-app-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-app-canvas px-5 text-sm font-semibold text-app-ink transition-colors hover:bg-app-line active:bg-app-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Upload aria-hidden="true" className="h-4 w-4" />
                     Replace
@@ -565,7 +565,7 @@ export function UploadScreen({
                     disabled={isBusy}
                     aria-label="Remove uploaded file"
                     title="Remove uploaded file"
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-[#737b82] text-app-muted transition-colors hover:bg-[#fff1f2] hover:text-[#e23b4a] active:bg-[#ffe4e6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-full bg-app-canvas text-app-muted transition-colors hover:bg-[#fff1f2] hover:text-[#e23b4a] active:bg-[#ffe4e6] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Trash2 aria-hidden="true" className="h-4 w-4" />
                   </button>
@@ -587,10 +587,10 @@ export function UploadScreen({
               type="button"
               onClick={() => void handleContinueToMapping()}
               disabled={!isContinueButtonEnabled}
-              className={`inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg px-7 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent sm:w-auto ${
+              className={`inline-flex h-12 w-full items-center justify-center gap-2 rounded-full px-7 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent sm:w-auto ${
                 isContinueButtonEnabled
-                  ? "cursor-pointer bg-app-accent text-white hover:bg-app-accent-strong active:bg-[#204d9c]"
-                  : "cursor-not-allowed border border-app-line bg-app-canvas text-app-muted"
+                  ? "cursor-pointer bg-black text-white hover:bg-app-ink active:bg-black"
+                  : "cursor-not-allowed bg-white text-app-muted"
               }`}
             >
               <span>

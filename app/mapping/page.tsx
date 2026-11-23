@@ -81,9 +81,9 @@ function getErrorMessage(error: unknown, fallback: string): string {
 }
 
 const secondaryButton =
-  "min-h-11 rounded-lg border border-[#737b82] bg-white px-4 text-sm font-semibold text-app-ink transition-colors hover:bg-app-canvas active:bg-app-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:opacity-50";
+  "h-11 rounded-full bg-app-canvas px-5 text-sm font-semibold text-app-ink transition-colors hover:bg-app-line active:bg-app-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:opacity-50";
 const primaryButton =
-  "min-h-11 rounded-lg bg-app-accent px-5 text-sm font-semibold text-white transition-colors hover:bg-app-accent-strong active:bg-[#204d9c] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:opacity-50";
+  "h-12 rounded-full bg-black px-6 text-sm font-semibold text-white transition-colors hover:bg-app-ink active:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function MappingPage() {
   const router = useRouter();
@@ -198,7 +198,7 @@ export default function MappingPage() {
             setPageError(null);
             setProfileRetryCount((count) => count + 1);
           }}
-          className="inline-flex min-h-11 items-center justify-center rounded-lg bg-app-ink px-5 text-sm font-semibold text-white transition-colors hover:bg-[#30363b] active:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
+          className="inline-flex h-12 items-center justify-center rounded-full bg-black px-6 text-sm font-semibold text-white transition-colors hover:bg-app-ink active:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
         >
           Retry
         </button>
@@ -234,7 +234,7 @@ export default function MappingPage() {
   const handleAnalyse = async () => {
     if (!uploadStillCurrent()) return;
     const started = await controller.analyseNow();
-    if (started && uploadStillCurrent()) router.push(`/analysis/${view.uploadId}`);
+    if (started && uploadStillCurrent()) router.push("/dashboard");
   };
   const isStarting = phase === "confirming" || view.analytics.status === "submitting";
 
@@ -246,7 +246,7 @@ export default function MappingPage() {
         creditBalance={profile.credit_balance}
         onLogout={handleLogout}
       />
-      <main className="flex w-full flex-1 flex-col px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+      <main className="flex w-full flex-1 flex-col px-4 pb-8 pt-1 sm:px-6 sm:pb-10 sm:pt-1 lg:px-8">
         <UploadTitleSection
           currentStep="mapping"
           title="Map work-order columns"
@@ -261,7 +261,7 @@ export default function MappingPage() {
             </Link>
           </div>
         ) : (
-          <section className="flex flex-col gap-6 rounded-2xl border border-app-line bg-app-surface p-4 sm:p-6">
+          <section className="flex flex-col gap-6 rounded-3xl bg-white p-4 sm:p-6">
             <div className="flex min-w-0 flex-col gap-1 border-b border-app-line pb-4 sm:flex-row sm:items-baseline sm:justify-between">
               <h2 title={dataset?.fileName} className="truncate text-sm font-semibold text-app-ink">
                 {dataset?.fileName ?? "Uploaded file"}

@@ -17,9 +17,9 @@ export function UploadTitleSection({
   const isMapping = currentStep === "mapping";
 
   return (
-    <div className="mb-8 flex shrink-0 flex-col gap-6 sm:mb-10 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mb-4 flex shrink-0 flex-col gap-4 sm:mb-5 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 className="text-3xl font-medium leading-tight tracking-tight text-app-ink sm:text-4xl">
+        <h1 className="text-2xl font-medium leading-tight tracking-tight text-app-ink sm:text-3xl">
           {title}
         </h1>
         <p className="mt-2 max-w-xl text-sm leading-6 text-app-muted">{description}</p>
@@ -38,7 +38,7 @@ export function UploadTitleSection({
               href="/upload"
               className="inline-flex min-h-11 items-center gap-2 rounded-md text-app-muted underline-offset-4 transition-colors hover:text-app-ink hover:underline active:text-app-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
             >
-              <span className="flex h-7 w-7 items-center justify-center rounded-full border border-app-line bg-app-surface text-app-ink">
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white text-app-ink">
                 1
               </span>
               Upload file
@@ -58,7 +58,7 @@ export function UploadTitleSection({
             className={`flex h-7 w-7 items-center justify-center rounded-full ${
               isMapping
                 ? "bg-app-ink font-semibold text-white"
-                : "border border-app-line bg-app-surface text-app-muted"
+                : "bg-white text-app-muted"
             }`}
           >
             2

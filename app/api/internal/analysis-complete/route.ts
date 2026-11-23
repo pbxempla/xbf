@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       to: email,
       fileName: fileName.slice(0, 255),
       rows,
-      link: `${base}/analysis/${uploadId}`,
+      link: `${base}/dashboard`,
     });
   } catch (error) {
     console.error("Could not send the analysis-ready email.", error);

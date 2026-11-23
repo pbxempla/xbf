@@ -52,10 +52,10 @@ export function FileDropzone({ onFileSelected, disabled }: FileDropzoneProps) {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      className={`flex min-h-[280px] flex-1 flex-col items-center justify-center rounded-[20px] border border-dashed px-5 py-8 text-center transition-colors sm:min-h-[320px] lg:min-h-[360px] lg:py-10 ${
+      className={`flex min-h-[280px] flex-1 flex-col items-center justify-center rounded-3xl border border-dashed px-5 py-8 text-center transition-colors sm:min-h-[320px] lg:min-h-[360px] lg:py-10 ${
         isDragOver
           ? "border-app-accent bg-app-accent-wash ring-2 ring-app-accent/15"
-          : "border-[#737b82] bg-app-surface hover:border-app-ink hover:bg-app-canvas"
+          : "border-app-ink/25 bg-white hover:border-app-ink"
       } ${disabled ? "cursor-not-allowed opacity-60" : ""}`}
     >
       <input
@@ -80,7 +80,7 @@ export function FileDropzone({ onFileSelected, disabled }: FileDropzoneProps) {
         type="button"
         onClick={() => fileInputRef.current?.click()}
         disabled={disabled}
-        className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-lg bg-app-ink px-6 text-sm font-semibold text-white transition-colors hover:bg-[#30363b] active:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:bg-app-muted"
+        className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-black px-6 text-sm font-semibold text-white transition-colors hover:bg-app-ink active:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:bg-app-muted"
       >
         <FolderOpen aria-hidden="true" className="h-4 w-4" />
         Browse files
@@ -90,7 +90,7 @@ export function FileDropzone({ onFileSelected, disabled }: FileDropzoneProps) {
         {UPLOAD_SECURITY_CONFIG.allowedExtensions.map((extension) => (
           <span
             key={extension}
-            className="rounded-md border border-app-line bg-app-canvas px-3 py-1.5 font-medium text-app-ink"
+            className="rounded-full bg-app-canvas px-3 py-1.5 font-medium text-app-ink"
           >
             {extension.toUpperCase()}
           </span>
