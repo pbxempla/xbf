@@ -7,6 +7,7 @@ import { authClient } from "@/lib/auth-client";
 import { ApiError, getCurrentUser } from "@/lib/api";
 import { UserProfile } from "@/types/auth";
 import { UploadScreen } from "@/components/upload/UploadScreen";
+import { DashboardShell } from "@/components/dashboard/DashboardShell";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -14,6 +15,16 @@ export default function UploadPage() {
   const [profile, setProfile] = React.useState<UserProfile | null>(null);
   const [profileError, setProfileError] = React.useState<string | null>(null);
   const [retryCount, setRetryCount] = React.useState(0);
+  const [accepted, setAccepted] = React.useState(false);
+  const acceptedRef = React.useRef(false);
+
+  // Runs on mount and every time the cached page is shown again (back navigation). If the
+  // previous visit ended in an accepted upload, start from a completely empty upload screen.
+  React.useLayoutEffect(() => {
+    if (!acceptedRef.current) return;
+    acceptedRef.current = false;
+    setAccepted(false);
+  }, []);
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -92,8 +103,30 @@ export default function UploadPage() {
     );
   }
 
+  // The upload screen is unmounted as soon as an upload is accepted, so the selected file and
+  // its parsed data are not kept in memory (this route's state survives back navigation).
+  if (accepted) {
+    return (
+      <DashboardShell
+        current="upload"
+        userEmail={profile.email}
+        userName={profile.full_name || undefined}
+        creditBalance={profile.credit_balance}
+        onLogout={handleLogout}
+      >
+        <p role="status" className="p-6 text-sm text-app-muted">
+          Opening mapping…
+        </p>
+      </DashboardShell>
+    );
+  }
+
   return (
     <UploadScreen
+      onAccepted={() => {
+        acceptedRef.current = true;
+        setAccepted(true);
+      }}
       userEmail={profile.email}
       userName={profile.full_name || undefined}
       creditBalance={profile.credit_balance}

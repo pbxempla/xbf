@@ -10,7 +10,6 @@ import {
 } from "@/lib/mapping/api";
 import type { AnalyticsSubmitResult } from "@/lib/mapping/contracts";
 import { AnalysisResults } from "@/components/analysis/AnalysisResults";
-import { InsightLenses } from "@/components/insights/InsightLenses";
 
 const POLL_MS = 3000;
 
@@ -283,12 +282,39 @@ export function AnalysisPanel({ email }: { email: string }) {
                 We finished analysing {fileLabel}. We’ve also emailed you at{" "}
                 {email}.
               </p>
-              <InsightLenses uploadId={uploadId} detailed />
-              <AnalysisResults uploadId={uploadId} />
+              <WorkOrderDetails uploadId={uploadId} />
             </div>
           )}
         </div>
       )}
     </section>
+  );
+}
+
+/** The per-work-order table is long, so it stays closed (and unloaded) until asked for. */
+function WorkOrderDetails({ uploadId }: { uploadId: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-2xl border border-app-line">
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
+      >
+        Work order details
+        <ChevronDown
+          aria-hidden="true"
+          className={`h-4 w-4 text-app-muted transition-transform motion-reduce:transition-none ${
+            open ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+      {open ? (
+        <div className="px-4 pb-4">
+          <AnalysisResults uploadId={uploadId} />
+        </div>
+      ) : null}
+    </div>
   );
 }

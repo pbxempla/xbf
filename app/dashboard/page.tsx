@@ -7,8 +7,7 @@ import { authClient } from "@/lib/auth-client";
 import { ApiError, getCurrentUser } from "@/lib/api";
 import { UserProfile } from "@/types/auth";
 import { DashboardShell } from "@/components/dashboard/DashboardShell";
-import { DashboardCard } from "@/components/dashboard/DashboardCard";
-import { InsightLenses } from "@/components/insights/InsightLenses";
+import { HeadlineStats, InsightLenses, useInsights } from "@/components/insights/InsightLenses";
 import { AnalysisPanel } from "@/components/analysis/AnalysisPanel";
 
 export default function DashboardPage() {
@@ -17,6 +16,7 @@ export default function DashboardPage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [pageError, setPageError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  const insights = useInsights(undefined, Boolean(session));
 
   useEffect(() => {
     if (!isPending && !session) router.replace("/");
@@ -118,26 +118,7 @@ export default function DashboardPage() {
         </section>
       ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <DashboardCard
-          title="Data readiness"
-          subtitle="Overall score across your uploads"
-          emptyMessage="Readiness appears once analysis results are available."
-          areaClassName="h-48"
-        />
-        <DashboardCard
-          title="Work-order volume"
-          subtitle="Jobs by month"
-          emptyMessage="No analysed work orders yet."
-          areaClassName="h-48"
-        />
-        <DashboardCard
-          title="Recent uploads"
-          subtitle="Latest facility exports"
-          emptyMessage="Uploaded files will be listed here."
-          areaClassName="h-48"
-        />
-      </div>
+      <HeadlineStats state={insights} />
 
       <AnalysisPanel email={profile.email} />
 
@@ -147,30 +128,11 @@ export default function DashboardPage() {
       >
         <h2 className="text-lg font-medium tracking-tight">Insight areas</h2>
         <p className="mt-1 text-sm text-app-muted">
-          Headline numbers for your latest upload, one card per insight area.
+          The key numbers for your latest upload, one card per insight area.
         </p>
         <div className="mt-5">
-          <InsightLenses />
+          <InsightLenses state={insights} />
         </div>
-      </section>
-
-      <section
-        aria-label="Upload facility data"
-        className="mt-4 flex flex-col gap-4 rounded-3xl bg-black p-6 text-white sm:flex-row sm:items-center sm:justify-between"
-      >
-        <div>
-          <h2 className="text-lg font-medium tracking-tight">Upload facility data</h2>
-          <p className="mt-1 text-sm text-white/70">
-            Choose a CSV or Excel file to map facility and work-order fields.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={() => router.push("/upload")}
-          className="inline-flex h-12 shrink-0 items-center justify-center rounded-full bg-white px-6 text-sm font-semibold text-black transition-colors hover:bg-app-line focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
-        >
-          Choose a file
-        </button>
       </section>
     </DashboardShell>
   );

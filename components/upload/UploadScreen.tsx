@@ -3,7 +3,7 @@
 import React, { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Trash2, Upload } from "lucide-react";
-import { UploadHeader } from "./UploadHeader";
+import { DashboardShell } from "@/components/dashboard/DashboardShell";
 import { UploadTitleSection } from "./UploadTitleSection";
 import { FileDropzone } from "./FileDropzone";
 import { UploadedFileCardSkeleton } from "@/components/ui/Skeleton";
@@ -35,6 +35,8 @@ interface UploadScreenProps {
   userName?: string;
   creditBalance: number;
   onLogout?: () => void;
+  /** Called once an accepted upload hands off to mapping, so the parent can discard this screen. */
+  onAccepted?: () => void;
 }
 
 const DEFAULT_VALIDATION_ITEMS: ValidationItem[] = [
@@ -61,6 +63,7 @@ export function UploadScreen({
   userName,
   creditBalance,
   onLogout,
+  onAccepted,
 }: UploadScreenProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -300,6 +303,7 @@ export function UploadScreen({
       }
       if (!datasetCacheSaved) return;
       router.push("/mapping");
+      onAccepted?.();
       return;
     }
 
@@ -354,6 +358,7 @@ export function UploadScreen({
         if (upload.validation_status === "passed") {
           setIsRedirecting(true);
           router.push("/mapping");
+          onAccepted?.();
         }
       } catch {
         setDatasetCacheSaved(false);
@@ -391,25 +396,16 @@ export function UploadScreen({
   );
 
   return (
-    <div
-      className={`flex w-full flex-col bg-app-canvas text-app-ink ${
-        hasSelectedFile
-          ? "min-h-screen lg:h-dvh lg:min-h-0 lg:overflow-hidden"
-          : "min-h-screen"
-      }`}
+    <DashboardShell
+      current="upload"
+      userEmail={userEmail ?? ""}
+      userName={userName}
+      creditBalance={creditBalance}
+      onLogout={onLogout ?? (() => {})}
     >
-      <UploadHeader
-        userEmail={userEmail}
-        userName={userName}
-        creditBalance={creditBalance}
-        onLogout={onLogout}
-      />
-
-      <main
-        className={`flex w-full flex-1 flex-col px-4 pb-8 pt-1 sm:px-6 sm:pb-10 sm:pt-1 lg:px-8 ${
-          hasSelectedFile
-            ? "lg:min-h-0 lg:overflow-hidden lg:pb-6 lg:pt-1"
-            : ""
+      <div
+        className={`flex w-full flex-1 flex-col ${
+          hasSelectedFile ? "lg:h-[calc(100dvh-76px-1.5rem)] lg:min-h-0 lg:overflow-hidden" : ""
         }`}
       >
         <UploadTitleSection />
@@ -608,7 +604,7 @@ export function UploadScreen({
             </button>
           </div>
         )}
-      </main>
-    </div>
+      </div>
+    </DashboardShell>
   );
 }

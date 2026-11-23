@@ -18,8 +18,8 @@ import { XemplaLogo } from "@/components/icons/Icons";
 import { CreditsBadge } from "@/components/ui/CreditsBadge";
 
 interface DashboardShellProps {
-  title: string;
-  current?: "overview" | "profile";
+  title?: string;
+  current?: "overview" | "profile" | "upload";
   userEmail: string;
   userName?: string;
   creditBalance: number;
@@ -40,6 +40,12 @@ const RAIL: RailItem[] = [
   { label: "History", icon: CalendarDays },
   { label: "Profile", icon: UserRound, href: "/profile" },
 ];
+
+const CURRENT_HREF = {
+  overview: "/dashboard",
+  profile: "/profile",
+  upload: "/upload",
+} as const;
 
 const railBase =
   "flex h-11 w-full items-center gap-3 rounded-full pl-[13px] pr-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent";
@@ -74,9 +80,13 @@ export function DashboardShell({
             <XemplaLogo iconOnly />
           </div>
 
-          <h1 className="min-w-0 flex-1 truncate text-xl font-medium tracking-tight sm:text-2xl">
-            {title}
-          </h1>
+          {title ? (
+            <h1 className="min-w-0 flex-1 truncate text-xl font-medium tracking-tight sm:text-2xl">
+              {title}
+            </h1>
+          ) : (
+            <div className="min-w-0 flex-1" />
+          )}
 
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             <CreditsBadge balance={creditBalance} />
@@ -118,7 +128,7 @@ export function DashboardShell({
         >
           <div className="flex h-full w-full flex-col gap-3 overflow-hidden rounded-[30px] bg-white p-2">
             {RAIL.map(({ label, icon: Icon, href }) => {
-              const active = href === (current === "profile" ? "/profile" : "/dashboard");
+              const active = href === CURRENT_HREF[current];
               const cls = `${railBase} ${active ? "bg-black text-white" : "text-app-ink/60"}`;
               return href ? (
                 <Link

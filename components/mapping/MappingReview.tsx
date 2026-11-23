@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { CANONICAL_FIELD_LABELS } from "@/lib/mapping/contracts";
 import type {
   CanonicalWorkOrderField,
@@ -172,22 +172,56 @@ interface PanelProps {
 }
 
 export function RequiredFieldsPanel(props: PanelProps) {
+  const [open, setOpen] = useState(false);
   const required = REQUIRED_TARGETS.map((target) =>
     props.proposal.mappings.find((mapping) => mapping.target === target),
   ).filter((mapping): mapping is MappingField => mapping !== undefined);
+  const allMapped =
+    required.length > 0 && required.every((mapping) => props.review.selections[mapping.target] != null);
+  const compact = allMapped && !open;
+
   return (
     <section aria-labelledby="required-fields-heading" className="rounded-xl border-2 border-app-ink/20 bg-app-canvas p-4">
-      <h2 id="required-fields-heading" className="text-base font-semibold text-app-ink">
-        Required fields
-      </h2>
-      <p className="mt-1 text-xs text-app-muted">
-        Facility ID and work order ID must be mapped before you can continue. Nothing is guessed for you.
-      </p>
-      <ul className="mt-3 grid gap-3 lg:grid-cols-2">
-        {required.map((mapping) => (
-          <FieldCard key={mapping.target} mapping={mapping} {...props} />
-        ))}
-      </ul>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="required-fields-heading" className="text-base font-semibold text-app-ink">
+          Required fields
+        </h2>
+        {allMapped ? (
+          <button
+            type="button"
+            onClick={() => setOpen((value) => !value)}
+            aria-expanded={open}
+            className="min-h-9 rounded-full px-3 text-xs font-semibold text-app-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
+          >
+            {open ? "Hide" : "Change"}
+          </button>
+        ) : null}
+      </div>
+
+      {compact ? (
+        <ul className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-sm">
+          {required.map((mapping) => {
+            const columnId = props.review.selections[mapping.target] ?? "";
+            return (
+              <li key={mapping.target} className="text-app-ink">
+                <span className="text-app-muted">{CANONICAL_FIELD_LABELS[mapping.target]}:</span>{" "}
+                <strong>{columnLabel(props.proposal.columns, columnId)}</strong>
+              </li>
+            );
+          })}
+        </ul>
+      ) : (
+        <>
+          <p className="mt-1 text-xs text-app-muted">
+            Facility ID and work order ID must be mapped before you can continue. Nothing is guessed for you.
+          </p>
+          <ul className="mt-3 grid gap-3 lg:grid-cols-2">
+            {required.map((mapping) => (
+              <FieldCard key={mapping.target} mapping={mapping} {...props} />
+            ))}
+          </ul>
+        </>
+      )}
     </section>
   );
 }

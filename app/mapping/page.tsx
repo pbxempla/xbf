@@ -94,6 +94,7 @@ export default function MappingPage() {
   const [profileRetryCount, setProfileRetryCount] = useState(0);
   const requiredFieldsRef = useRef<HTMLDivElement>(null);
   const [dismissedIssuesKey, setDismissedIssuesKey] = useState<string | null>(null);
+  const [showMatched, setShowMatched] = useState(false);
   const hydrated = useSyncExternalStore(subscribeNothing, () => true, () => false);
   const rawDataset = useSyncExternalStore(subscribeDataset, readStoredRaw, () => null);
   const dataset = useMemo<CachedDatasetInfo | null>(() => {
@@ -493,18 +494,24 @@ export default function MappingPage() {
                   />
                 ) : null}
 
-                <section aria-labelledby="source-columns-heading">
-                  <h2 id="source-columns-heading" className="text-base font-semibold text-app-ink">
-                    Columns in your file
-                  </h2>
-                  <ul className="mt-3 grid gap-3 lg:grid-cols-2">
-                    {proposal.columns.map((column) => {
-                      const assigned = holderOf(review, column.source_column_id);
-                      const samples = column.sample_values.filter(
-                        (value): value is string => Boolean(value?.trim()),
-                      );
-                      return (
-                        <li
+                {(() => {
+                  const settled = (columnId: string): boolean => {
+                    const assigned = holderOf(review, columnId);
+                    if (!assigned) return false;
+                    const category = displayCategory(proposal, review, assigned);
+                    return (
+                      category === "deterministic_match" ||
+                      category === "manual" ||
+                      category === "ai_accepted"
+                    );
+                  };
+                  const renderColumn = (column: (typeof proposal.columns)[number]) => {
+                    const assigned = holderOf(review, column.source_column_id);
+                    const samples = column.sample_values.filter(
+                      (value): value is string => Boolean(value?.trim()),
+                    );
+                    return (
+                      <li
                           key={column.source_column_id}
                           data-column-id={column.source_column_id}
                           className="min-w-0 rounded-xl border border-app-line bg-white p-4"
@@ -547,11 +554,45 @@ export default function MappingPage() {
                               <span className="text-xs text-app-muted">Not mapped</span>
                             )}
                           </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </section>
+                      </li>
+                    );
+                  };
+                  const attention = proposal.columns.filter((column) => !settled(column.source_column_id));
+                  const matched = proposal.columns.filter((column) => settled(column.source_column_id));
+                  return (
+                    <section aria-labelledby="source-columns-heading">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h2 id="source-columns-heading" className="text-base font-semibold text-app-ink">
+                          Columns in your file
+                        </h2>
+                        <p className="text-xs text-app-muted">
+                          {matched.length} of {proposal.columns.length} matched
+                          {attention.length > 0 ? `, ${attention.length} need a look` : ""}
+                        </p>
+                      </div>
+                      {attention.length > 0 ? (
+                        <ul className="mt-3 grid gap-3 lg:grid-cols-2">{attention.map(renderColumn)}</ul>
+                      ) : null}
+                      {matched.length > 0 ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => setShowMatched((value) => !value)}
+                            aria-expanded={showMatched}
+                            className="mt-3 inline-flex min-h-9 items-center gap-1 rounded-full text-xs font-semibold text-app-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent"
+                          >
+                            {showMatched
+                              ? "Hide matched columns"
+                              : `Show ${matched.length} matched column${matched.length === 1 ? "" : "s"}`}
+                          </button>
+                          {showMatched ? (
+                            <ul className="mt-3 grid gap-3 lg:grid-cols-2">{matched.map(renderColumn)}</ul>
+                          ) : null}
+                        </>
+                      ) : null}
+                    </section>
+                  );
+                })()}
 
                 {view.actionError && (
                   <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">

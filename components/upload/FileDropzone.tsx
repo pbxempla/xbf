@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 import { FolderOpen, UploadCloud } from "lucide-react";
 import { UPLOAD_SECURITY_CONFIG } from "@/lib/upload/security-config";
+import { CloudFilePickers } from "./CloudFilePickers";
 
 interface FileDropzoneProps {
   onFileSelected: (file: File) => void;
@@ -76,15 +77,18 @@ export function FileDropzone({ onFileSelected, disabled }: FileDropzoneProps) {
       </h2>
       <p className="mt-2 text-sm text-app-muted">Drop it here, or browse your device.</p>
 
+      <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
       <button
         type="button"
         onClick={() => fileInputRef.current?.click()}
         disabled={disabled}
-        className="mt-6 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-black px-6 text-sm font-semibold text-white transition-colors hover:bg-app-ink active:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:bg-app-muted"
+        className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-black px-6 text-sm font-semibold text-white transition-colors hover:bg-app-ink active:bg-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-app-accent disabled:cursor-not-allowed disabled:bg-app-muted"
       >
         <FolderOpen aria-hidden="true" className="h-4 w-4" />
         Browse files
       </button>
+      <CloudFilePickers onFileSelected={onFileSelected} disabled={disabled} />
+      </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-2 text-xs">
         {UPLOAD_SECURITY_CONFIG.allowedExtensions.map((extension) => (
