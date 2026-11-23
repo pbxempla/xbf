@@ -11,6 +11,8 @@ import type {
   JevSuggestion,
   MappingDecisionMetadata,
   MappingProposal,
+  PriorityLevel,
+  PriorityValuesResponse,
 } from "./contracts";
 
 type JsonRecord = Record<string, unknown>;
@@ -68,6 +70,19 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   return body as T;
 }
 
+export async function fetchPriorityValues(
+  uploadId: string,
+  columnId: string,
+): Promise<PriorityValuesResponse> {
+  const result = await requestJson<PriorityValuesResponse>(
+    `/api/backend/uploads/${encodeURIComponent(uploadId)}/mapping/priority-values?column_id=${encodeURIComponent(columnId)}`,
+  );
+  if (!Array.isArray(result.values) || result.column_id !== columnId) {
+    throw new Error("The backend returned an invalid priority list.");
+  }
+  return result;
+}
+
 export async function prepareMapping(uploadId: string): Promise<MappingProposal> {
   const result = await requestJson<MappingProposal>(
     `/api/backend/uploads/${encodeURIComponent(uploadId)}/mapping/proposal`,
@@ -93,6 +108,7 @@ export async function confirmMapping(
   proposal: MappingProposal,
   mappings: Record<CanonicalWorkOrderField, string | null>,
   decisionMetadata: Record<string, MappingDecisionMetadata>,
+  priorityLevels: Record<string, PriorityLevel> = {},
 ): Promise<ImportResult> {
   const result = await requestJson<ImportResult>(
     `/api/backend/uploads/${encodeURIComponent(uploadId)}/mapping/confirm`,
@@ -105,6 +121,9 @@ export async function confirmMapping(
         // Only the claim "the user accepted a suggestion" is sent; the backend
         // verifies it against its own record and ignores client confidence/model.
         decision_metadata: decisionMetadata,
+        // What the user's priority values mean in our levels. The priority sent to the
+        // engine stays as the customer wrote it.
+        priority_levels: priorityLevels,
         save_profile: true,
       }),
     },

@@ -21,6 +21,7 @@ import type {
   MappingDecisionMetadata,
   MappingField,
   MappingProposal,
+  PriorityLevel,
 } from "./contracts";
 
 /** Display-only copy of the backend's requirement (the backend enforces it on confirm). */
@@ -299,6 +300,7 @@ export interface MappingApi {
     proposal: MappingProposal,
     mappings: ConfirmPayload["mappings"],
     decisionMetadata: Record<string, MappingDecisionMetadata>,
+    priorityLevels?: Record<string, PriorityLevel>,
   ): Promise<ImportResult>;
   submitAnalytics(uploadId: string): Promise<AnalyticsSubmitResult>;
   fetchAnalyticsStatus(uploadId: string): Promise<AnalyticsSubmitResult>;
@@ -332,6 +334,8 @@ export interface MappingViewState {
   };
   importResult: ImportResult | null;
   analytics: { status: "idle" | "submitting" | "done" | "error"; result: AnalyticsSubmitResult | null };
+  /** The user's own priority scale: their value (as in the file) -> our standard level. */
+  priorityLevels: Record<string, PriorityLevel>;
 }
 
 const emptyReview = (): ReviewState => ({ selections: {}, origins: {}, rejected: {} });
@@ -348,6 +352,7 @@ function initialState(uploadId: string | null): MappingViewState {
     ai: { status: "idle", attempted: false, model: null, withheld: [], error: null, consent: null, needsAcknowledgement: false, mode: "unknown", analysis: null },
     importResult: null,
     analytics: { status: "idle", result: null },
+    priorityLevels: {},
   };
 }
 
@@ -734,6 +739,11 @@ export function createMappingController(api: MappingApi, options: ControllerOpti
     dismissConflict() {
       set({ conflict: null });
     },
+    /** The user's priority scale from the priority card; sent with the confirm call. */
+    setPriorityLevels(levels: Record<string, PriorityLevel>) {
+      if (state.phase !== "ready") return;
+      set({ priorityLevels: { ...levels } });
+    },
 
     validate: () => (state.proposal ? validate(state.proposal, state.review) : []),
 
@@ -750,7 +760,15 @@ export function createMappingController(api: MappingApi, options: ControllerOpti
       const payload = buildConfirmPayload(proposal, state.review);
       set({ phase: "confirming", actionError: null });
       try {
-        const result = await api.confirmMapping(uploadId, proposal, payload.mappings, payload.decisionMetadata);
+        // The scale only applies while a priority column is selected.
+        const levels = state.review.selections.priority ? state.priorityLevels : {};
+        const result = await api.confirmMapping(
+          uploadId,
+          proposal,
+          payload.mappings,
+          payload.decisionMetadata,
+          levels,
+        );
         if (!isCurrent(gen, uploadId)) return;
         set({ phase: "confirmed", importResult: result });
       } catch (error) {

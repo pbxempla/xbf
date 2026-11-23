@@ -157,6 +157,23 @@ export interface AnalyticsSubmitResult {
   results_failed: number;
 }
 
+export const PRIORITY_LEVELS = ["Critical", "High", "Medium", "Low"] as const;
+export type PriorityLevel = (typeof PRIORITY_LEVELS)[number];
+
+export interface PriorityValue {
+  value: string;
+  count: number;
+  /** Pre-fill: the user's saved choice, else a default guess; null when unknown. */
+  level: PriorityLevel | null;
+  level_source: "saved" | "default" | null;
+}
+
+export interface PriorityValuesResponse {
+  column_id: string;
+  values: PriorityValue[];
+  truncated: boolean;
+}
+
 /** A deterministic metric. `value` is null when `status` is "unavailable" (never zero). */
 export interface InsightMetric {
   value: number | string | boolean | null;

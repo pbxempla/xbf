@@ -15,6 +15,7 @@ const allowedPaths = new Set([
   "users/me/ai-consent/grant",
   "users/me/ai-consent/withdraw",
   "users/me/ai-usage",
+  "users/me/mapping-aliases",
   "uploads",
   "insights/latest",
 ]);
@@ -22,6 +23,17 @@ const allowedPaths = new Set([
 function isAllowedBackendPath(path: string[], method: string): boolean {
   const joined = path.join("/");
   if (allowedPaths.has(joined)) return true;
+  // Forget one remembered column name: DELETE users/me/mapping-aliases/{id}
+  if (
+    method === "DELETE" &&
+    path.length === 4 &&
+    path[0] === "users" &&
+    path[1] === "me" &&
+    path[2] === "mapping-aliases" &&
+    /^[0-9a-f-]{36}$/i.test(path[3])
+  ) {
+    return true;
+  }
   if (
     (path.length !== 3 && path.length !== 4) ||
     path[0] !== "uploads" ||
@@ -36,6 +48,7 @@ function isAllowedBackendPath(path: string[], method: string): boolean {
     (route === "mapping/ai-suggestions" && method === "POST") ||
     (route === "mapping/analysis" && (method === "POST" || method === "GET")) ||
     (route === "mapping/confirm" && method === "POST") ||
+    (route === "mapping/priority-values" && method === "GET") ||
     (route === "analytics/submit" && method === "POST") ||
     (route === "analytics/status" && method === "GET") ||
     (route === "insights" && method === "GET") ||
@@ -195,3 +208,4 @@ async function proxyRequest(request: NextRequest, context: RouteContext) {
 export const GET = proxyRequest;
 export const PATCH = proxyRequest;
 export const POST = proxyRequest;
+export const DELETE = proxyRequest;

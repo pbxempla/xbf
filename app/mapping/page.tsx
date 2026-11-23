@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, X } from "lucide-react";
 import { MappingFieldCombobox } from "@/components/mapping/MappingFieldCombobox";
+import { PriorityLevelsCard } from "@/components/mapping/PriorityLevelsCard";
 import {
   ConflictBanner,
   RequiredFieldsPanel,
@@ -482,6 +483,16 @@ export default function MappingPage() {
                   onPick={(target, columnId) => controller.assign(target, columnId)}
                 />
 
+                {/* Right under the field review so it is not missed below the long column list. */}
+                {view.phase === "ready" && view.uploadId && view.review.selections.priority ? (
+                  <PriorityLevelsCard
+                    key={view.review.selections.priority}
+                    uploadId={view.uploadId}
+                    columnId={view.review.selections.priority}
+                    onChange={controller.setPriorityLevels}
+                  />
+                ) : null}
+
                 <section aria-labelledby="source-columns-heading">
                   <h2 id="source-columns-heading" className="text-base font-semibold text-app-ink">
                     Columns in your file
@@ -562,6 +573,9 @@ export default function MappingPage() {
                     <p className="text-sm text-app-muted sm:mr-auto">
                       Uses about {Math.max(1, Math.ceil(proposal.total_rows / 50)).toLocaleString()} credits
                       (1 per 50 rows) · you have {profile.credit_balance.toLocaleString()}
+                      <span className="block">
+                        Columns you choose here are remembered for your next uploads.
+                      </span>
                     </p>
                   )}
                   <button
