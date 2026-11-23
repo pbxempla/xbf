@@ -60,6 +60,29 @@ export async function getCurrentUser(): Promise<UserProfile> {
   };
 }
 
+export interface CreditTransaction {
+  id: string;
+  /** Positive for credits added, negative for credits used. */
+  amount: number;
+  balance_after: number;
+  transaction_type: string;
+  description: string;
+  created_at: string;
+}
+
+/** The signed-in user's credit ledger, newest first. */
+export async function getCreditTransactions(): Promise<CreditTransaction[]> {
+  const response = await fetch("/api/backend/users/me/credits/transactions", {
+    credentials: "same-origin",
+    cache: "no-store",
+  });
+  const data = (await response.json().catch(() => null)) as unknown;
+  if (!response.ok || !Array.isArray(data)) {
+    throw new ApiError("Unable to load your credit usage.", response.status);
+  }
+  return data as CreditTransaction[];
+}
+
 export interface ProfileUpdate {
   full_name: string;
   job_title: string;

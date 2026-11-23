@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { XemplaLogo } from "@/components/icons/Icons";
+import { CreditsBadge } from "@/components/ui/CreditsBadge";
 
 interface DashboardShellProps {
   title: string;
@@ -78,14 +79,7 @@ export function DashboardShell({
           </h1>
 
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
-            <div
-              role="group"
-              aria-label={`${creditBalance} credits available`}
-              className="flex h-11 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold"
-            >
-              <span className="text-app-muted">Credits</span>
-              <span>{creditBalance}</span>
-            </div>
+            <CreditsBadge balance={creditBalance} />
             <button
               type="button"
               disabled

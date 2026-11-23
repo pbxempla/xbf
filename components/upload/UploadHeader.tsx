@@ -3,6 +3,7 @@
 import React from "react";
 import { LogOut } from "lucide-react";
 import { XemplaLogo } from "@/components/icons/Icons";
+import { CreditsBadge } from "@/components/ui/CreditsBadge";
 
 interface UploadHeaderProps {
   userEmail?: string;
@@ -33,14 +34,7 @@ export function UploadHeader({
       </div>
 
       <div className="flex min-w-0 items-center gap-2 sm:gap-3">
-        <div
-          role="group"
-          aria-label={`${creditBalance} credits available`}
-          className="flex h-11 shrink-0 items-center gap-2 rounded-full bg-white px-4 text-sm font-semibold"
-        >
-          <span className="text-app-muted">Credits</span>
-          <span>{creditBalance}</span>
-        </div>
+        <CreditsBadge balance={creditBalance} />
         <div
           aria-hidden="true"
           title={displayName}
