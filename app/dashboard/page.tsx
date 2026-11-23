@@ -118,9 +118,10 @@ export default function DashboardPage() {
         </section>
       ) : null}
 
-      <HeadlineStats state={insights} />
-
+      {/* The engine's analysis comes first; our own rule-based numbers follow. */}
       <AnalysisPanel email={profile.email} />
+
+      <HeadlineStats state={insights} />
 
       <section
         aria-label="Insight areas"

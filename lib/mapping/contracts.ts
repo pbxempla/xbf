@@ -212,7 +212,24 @@ export interface AnalyticsSummary {
   closure_skipped: number;
   /** field name -> value -> number of work orders */
   breakdowns: Record<string, Record<string, number>>;
+  /** P1 and P2 work orders. */
+  high_severity: number;
+  follow_up_needed: number;
+  low_effectiveness: number;
+  /** The engine's severity differs from the customer's own priority. */
+  source_disagreements: number;
+  avg_confidence: { fault: number | null; closure: number | null };
+  inventory: { rows_using_parts: number; top_items: { item: string; count: number }[] };
+  usage: {
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+    estimated_usd: number;
+    models: string[];
+  };
 }
+
+export type ResultFilter = "all" | "attention" | "high_severity" | "follow_up" | "low_effectiveness";
 
 export interface AnalyticsResultItem {
   row_number: number;
@@ -221,6 +238,12 @@ export interface AnalyticsResultItem {
   engine_status: string;
   fault_enrichment: Record<string, unknown> | null;
   closure_enrichment: Record<string, unknown> | null;
+  queue_id: string | null;
+  processed_at: string | null;
+  context_snapshot: Record<string, unknown> | null;
+  processing_cost: Record<string, unknown> | null;
+  /** Why the work order was not analysed (never row data). */
+  error: string | null;
 }
 
 export interface AnalyticsResultsPage {

@@ -13,6 +13,7 @@ import type {
   MappingProposal,
   PriorityLevel,
   PriorityValuesResponse,
+  ResultFilter,
 } from "./contracts";
 
 type JsonRecord = Record<string, unknown>;
@@ -325,9 +326,11 @@ export async function fetchAnalyticsResults(
   uploadId: string,
   cursor = 0,
   limit = 25,
+  filter: ResultFilter = "all",
 ): Promise<AnalyticsResultsPage> {
+  // With a filter the cursor is an offset into the filtered list (the backend sorts it).
   const page = await requestJson<AnalyticsResultsPage>(
-    `/api/backend/uploads/${encodeURIComponent(uploadId)}/analytics/results?limit=${limit}&cursor=${cursor}`,
+    `/api/backend/uploads/${encodeURIComponent(uploadId)}/analytics/results?limit=${limit}&cursor=${cursor}&filter=${filter}`,
   );
   if (!Array.isArray(page.items) || typeof page.total !== "number") {
     throw new Error("The analytics API returned an invalid results page.");
