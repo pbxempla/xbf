@@ -345,15 +345,6 @@ export function UploadScreen({
           backendValidationStatus: upload.validation_status,
           backendSecurityFindings: upload.security_findings,
         };
-        if (process.env.NODE_ENV !== "production") {
-          // DEV DIAGNOSTIC — no file contents, no secrets logged.
-          console.debug("[upload] writing sessionStorage", {
-            uploadId: datasetPayload.backendUploadId,
-            fileName: datasetPayload.fileName,
-            columnCount: datasetPayload.columnCount,
-            rowCount: datasetPayload.rowCount,
-          });
-        }
         sessionStorage.setItem(
           "xempla_current_dataset",
           JSON.stringify(datasetPayload),
