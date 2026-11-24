@@ -9,12 +9,11 @@
 !.yarn/versions
 
 
-# Testing and test scripts
+# Testing
 /coverage
 .nyc_output/
 /tests
 /test
-/scripts
 
 # Next.js build and cache outputs
 /.next/
