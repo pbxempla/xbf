@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { getAuth } from "@/lib/auth";
 
 type RouteContext = {
   params: Promise<{ path: string[] }>;
@@ -128,9 +128,9 @@ async function proxyRequest(request: NextRequest, context: RouteContext) {
     }
   }
 
-  let session: Awaited<ReturnType<typeof auth.api.getSession>>;
+  let session: Awaited<ReturnType<ReturnType<typeof getAuth>["api"]["getSession"]>>;
   try {
-    session = await auth.api.getSession({ headers: request.headers });
+    session = await getAuth().api.getSession({ headers: request.headers });
   } catch (error) {
     console.error("Could not validate the Better Auth session.", error);
     return NextResponse.json(
