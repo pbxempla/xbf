@@ -15,9 +15,10 @@ bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-Next.js uses `PORT` from the process environment for its listening port
-(default `3000`). Set it in the hosting platform or shell, not `.env`, since
-Next.js reads it before loading `.env`.
+The port comes from `PORT` in `.env` (default `3000`); `npm run dev` and
+`npm start` read it via `scripts/run-next.mjs`. To change it: edit `PORT`, set
+`BETTER_AUTH_URL`, `NEXT_PUBLIC_APP_URL` and the backend `FRONTEND_URL` to the
+same origin, then `npm run build` and `npm start`.
 
 Before testing authentication locally, copy `.env.example` to `.env` in this
 frontend directory and set `DATABASE_URL` to a Node `pg` connection string, for
@@ -86,8 +87,7 @@ quarantined and does not imply server-side mapping or processing.
 
 Configure these values in the frontend hosting environment:
 
-- `PORT`: listening port (defaults to `3000`; set as a process environment
-  variable, not in `.env`).
+- `PORT`: listening port (defaults to `3000`; read from `.env`).
 - `BETTER_AUTH_URL` and `NEXT_PUBLIC_APP_URL`: the deployed frontend URL,
   including `https://`.
 - `BACKEND_API_URL`: the private FastAPI base URL, including `/api/v1`.
