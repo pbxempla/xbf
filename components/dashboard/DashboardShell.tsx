@@ -19,7 +19,7 @@ import { CreditsBadge } from "@/components/ui/CreditsBadge";
 
 interface DashboardShellProps {
   title?: string;
-  current?: "overview" | "profile" | "upload" | "reports";
+  current?: "overview" | "profile" | "upload" | "reports" | "history";
   userEmail: string;
   userName?: string;
   creditBalance: number;
@@ -37,7 +37,7 @@ const RAIL: RailItem[] = [
   { label: "Overview", icon: LayoutGrid, href: "/dashboard" },
   { label: "Upload data", icon: Upload, href: "/upload" },
   { label: "Reports", icon: FileText, href: "/reports" },
-  { label: "History", icon: CalendarDays },
+  { label: "History", icon: CalendarDays, href: "/history" },
   { label: "Profile", icon: UserRound, href: "/profile" },
 ];
 
@@ -46,6 +46,7 @@ const CURRENT_HREF = {
   profile: "/profile",
   upload: "/upload",
   reports: "/reports",
+  history: "/history",
 } as const;
 
 const railBase =

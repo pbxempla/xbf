@@ -9,6 +9,7 @@ type RouteContext = {
 const allowedPaths = new Set([
   "users/me",
   "users/me/avatar",
+  "analyses",
   "users/me/credits",
   "users/me/credits/transactions",
   "users/me/ai-consent",

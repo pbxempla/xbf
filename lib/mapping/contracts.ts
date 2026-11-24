@@ -318,3 +318,21 @@ export interface AiWithheldSuggestion {
   confidence: number;
   reasons: string[];
 }
+
+export interface AnalysisHistoryItem {
+  /** Unique id of the analysis, stored against the signed-in user. */
+  analysis_id: string;
+  upload_id: string;
+  file_name: string;
+  state: "not_started" | "sending" | "analysing" | "completed" | "failed";
+  total_rows: number;
+  valid_rows: number;
+  credits_charged: number | null;
+  started_at: string;
+  completed_at: string | null;
+}
+
+export interface AnalysisHistoryPage {
+  total: number;
+  items: AnalysisHistoryItem[];
+}

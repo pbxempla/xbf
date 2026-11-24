@@ -1,4 +1,4 @@
-import type {
+import type { AnalysisHistoryPage,
   AnalyticsResultsPage,
   AnalyticsSubmitResult,
   AnalyticsSummary,
@@ -334,6 +334,16 @@ export async function fetchAnalyticsResults(
   );
   if (!Array.isArray(page.items) || typeof page.total !== "number") {
     throw new Error("The analytics API returned an invalid results page.");
+  }
+  return page;
+}
+
+export async function fetchAnalysisHistory(limit = 25, offset = 0): Promise<AnalysisHistoryPage> {
+  const page = await requestJson<AnalysisHistoryPage>(
+    `/api/backend/analyses?limit=${limit}&offset=${offset}`,
+  );
+  if (!Array.isArray(page.items) || typeof page.total !== "number") {
+    throw new Error("The history API returned an invalid response.");
   }
   return page;
 }

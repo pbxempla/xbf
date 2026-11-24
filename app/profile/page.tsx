@@ -53,7 +53,7 @@ export default function ProfilePage() {
   };
 
   if (isPending || (session && !profile && !pageError)) {
-    return <WorkspaceSkeleton variant="dashboard" label="Loading your profile" />;
+    return <WorkspaceSkeleton variant="profile" label="Loading your profile" />;
   }
   if (!session) return null;
 

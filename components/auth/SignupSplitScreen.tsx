@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { SignupForm } from "./SignupForm";
 import { OtpVerification } from "./OtpVerification";
 import { AuthIllustration } from "./AuthIllustration";
@@ -12,10 +13,26 @@ import { getCurrentUser } from "@/lib/api";
 type ScreenState = "checking" | "form" | "otp" | "authenticated" | "profile-error";
 
 export function SignupSplitScreen() {
+  const router = useRouter();
   const [screenState, setScreenState] = useState<ScreenState>("checking");
   const [otpData, setOtpData] = useState<OtpRequestResponse | null>(null);
   const [authSession, setAuthSession] = useState<AuthSessionResponse | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
+
+  // The welcome screen is for first-time account setup only. Anyone who already has an
+  // account goes straight to the dashboard.
+  const proceed = useCallback(
+    (session: AuthSessionResponse) => {
+      if (session.is_new_user) {
+        setAuthSession(session);
+        setScreenState("authenticated");
+        return;
+      }
+      setScreenState("checking");
+      router.replace("/dashboard");
+    },
+    [router],
+  );
 
   // The form is only shown once we know nobody is signed in, so a signed-in user can never
   // request a sign-in code. A session with a failing profile load stays off the form.
@@ -32,12 +49,11 @@ export function SignupSplitScreen() {
 
       const user = await getCurrentUser();
       if (!isActive()) return;
-      setAuthSession({
+      proceed({
         is_new_user: user.is_new_user ?? false,
         credits_awarded: user.credits_awarded ?? 0,
         user,
       });
-      setScreenState("authenticated");
     } catch (error) {
       if (!isActive()) return;
       setAuthError(
@@ -45,7 +61,7 @@ export function SignupSplitScreen() {
       );
       setScreenState(hasSession ? "profile-error" : "form");
     }
-  }, []);
+  }, [proceed]);
 
   useEffect(() => {
     let active = true;
@@ -76,8 +92,7 @@ export function SignupSplitScreen() {
 
   const handleOtpSuccess = (session: AuthSessionResponse) => {
     setAuthError(null);
-    setAuthSession(session);
-    setScreenState("authenticated");
+    proceed(session);
   };
 
   const handleChangeEmail = () => {
