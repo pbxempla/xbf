@@ -19,7 +19,7 @@ import { CreditsBadge } from "@/components/ui/CreditsBadge";
 
 interface DashboardShellProps {
   title?: string;
-  current?: "overview" | "profile" | "upload";
+  current?: "overview" | "profile" | "upload" | "reports";
   userEmail: string;
   userName?: string;
   creditBalance: number;
@@ -36,7 +36,7 @@ interface RailItem {
 const RAIL: RailItem[] = [
   { label: "Overview", icon: LayoutGrid, href: "/dashboard" },
   { label: "Upload data", icon: Upload, href: "/upload" },
-  { label: "Reports", icon: FileText },
+  { label: "Reports", icon: FileText, href: "/reports" },
   { label: "History", icon: CalendarDays },
   { label: "Profile", icon: UserRound, href: "/profile" },
 ];
@@ -45,6 +45,7 @@ const CURRENT_HREF = {
   overview: "/dashboard",
   profile: "/profile",
   upload: "/upload",
+  reports: "/reports",
 } as const;
 
 const railBase =
@@ -73,8 +74,8 @@ export function DashboardShell({
       .toUpperCase() || "X";
 
   return (
-    <div className="min-h-screen bg-app-canvas text-app-ink">
-      <header className="sticky top-0 z-20 bg-app-canvas/90 px-4 py-4 backdrop-blur sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-app-canvas text-app-ink print:bg-white">
+      <header className="sticky top-0 z-20 bg-app-canvas/90 px-4 py-4 backdrop-blur sm:px-6 lg:px-8 print:hidden">
         <div className="flex items-center gap-4">
           <div className="flex shrink-0 justify-center md:w-[60px]">
             <XemplaLogo iconOnly />
@@ -122,7 +123,7 @@ export function DashboardShell({
       <div className="flex min-h-[calc(100vh-76px)] gap-4 px-4 pb-4 sm:px-6 sm:pb-6 lg:px-8">
         <aside
           aria-label="Primary"
-          className={`sticky top-[76px] z-10 hidden h-[calc(100vh-76px-1.5rem)] shrink-0 self-start transition-[width] duration-200 ease-out motion-reduce:transition-none md:block ${
+          className={`sticky top-[76px] z-10 hidden h-[calc(100vh-76px-1.5rem)] shrink-0 self-start transition-[width] duration-200 ease-out motion-reduce:transition-none md:block print:hidden ${
             expanded ? "w-52" : "w-[60px]"
           }`}
         >

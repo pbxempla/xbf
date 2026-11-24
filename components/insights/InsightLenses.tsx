@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
+import { formatValue, isAvailable, isRanked, label } from "@/lib/insights/format";
 import { fetchLatestInsights, fetchUploadInsights, MappingApiError } from "@/lib/mapping/api";
 import type {
   InsightLens,
@@ -18,41 +19,6 @@ const LENS_ORDER = [
   "training_productivity",
   "data_quality",
 ];
-
-const ACRONYMS: Record<string, string> = { sla: "SLA", ppm: "PPM", wo: "Work order" };
-
-/** "average_fix_time_hours" -> "Average fix time"; the unit is added to the value instead. */
-const label = (key: string): string => {
-  const words = key
-    .replace(/_(pct|hours|days|score)$/, "")
-    .split("_")
-    .map((word) => ACRONYMS[word] ?? word);
-  const text = words.join(" ");
-  return text.charAt(0).toUpperCase() + text.slice(1);
-};
-
-function formatValue(key: string, value: InsightMetric["value"]): string {
-  if (typeof value === "boolean") return value ? "Yes" : "No";
-  if (typeof value === "number") {
-    const text = value.toLocaleString(undefined, { maximumFractionDigits: 2 });
-    if (key.endsWith("_pct") || key.endsWith("_score")) return `${text}%`;
-    if (key.endsWith("_hours")) return `${text} h`;
-    if (key.endsWith("_days")) return `${text} days`;
-    return text;
-  }
-  return String(value ?? "—");
-}
-
-type Ranked = { key: string; value: number };
-const isRanked = (item: unknown): item is Ranked =>
-  typeof item === "object" &&
-  item !== null &&
-  "key" in item &&
-  "value" in item &&
-  typeof (item as Ranked).value === "number";
-
-const isAvailable = (metric: InsightMetric): boolean =>
-  metric.status === "ok" && metric.value !== null;
 
 /* ------------------------------------------------------------------ */
 /* Data                                                                */
@@ -108,7 +74,7 @@ const HEADLINES: Array<{ title: string; lens: string; metric: string }> = [
 /** The four numbers worth seeing first, from the latest analysed upload. */
 export function HeadlineStats({ state }: { state: InsightsState }) {
   return (
-    <section aria-label="Headline numbers" className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+    <section aria-label="Headline numbers" className="mt-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
       {HEADLINES.map(({ title, lens, metric }) => {
         const found =
           state.status === "ready" ? state.insights.lenses[lens]?.metrics[metric] : undefined;
